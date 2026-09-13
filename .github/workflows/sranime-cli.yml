@@ -1,0 +1,46 @@
+name: 'sranime-cli checks'
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - "sranime-cli"
+
+jobs:
+  sh-checker:
+    name: Shellcheck + Shfmt
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run the sh-checker
+      uses: luizm/action-sh-checker@master
+      env:
+        SHELLCHECK_OPTS: -s sh -o all -e 2250
+        SHFMT_OPTS: -i 4 -ci -d
+      with:
+        sh_checker_exclude: "_sranime-cli-bash _sranime-cli-zsh"
+      
+  check-exec:
+    name: Executable Bit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: test exec bit
+      run: test -x "./sranime-cli"
+
+  check-no-awk:
+    name: No Awk Allowed
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: verify that noone added awk
+      run: '! grep awk "./sranime-cli"'
+
+  check-no-wget:
+    name: No Wget Allowed
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: verify that noone added wget
+      run: '! grep wget "./sranime-cli"'
