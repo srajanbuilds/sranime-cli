@@ -1,5 +1,5 @@
 # Hacking sranime-cli
-Ani-cli is set up to scrape one platform - currently hianime. Supporting multiple sources at a time would require more changes than we (the maintainers) find worth doing, for this reason any feature request asking for a new site is rejected.
+sranime-cli is set up to scrape one platform - currently hianime. Supporting multiple sources at a time would require more changes than we (the maintainers) find worth doing, for this reason any feature request asking for a new site is rejected.
 
 However sranime-cli being open-source and the pirate anime streaming sites being so similar you can hack sranime-cli to support any site that follows a few conventions.
 

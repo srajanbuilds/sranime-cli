@@ -1,10 +1,10 @@
-class AniCli < Formula
+class SranimeCli < Formula
   desc "Cli tool to browse and play anime"
   homepage "https://github.com/srajanbuilds/sranime-cli"
   url "https://github.com/srajanbuilds/sranime-cli/archive/refs/tags/v5.1.tar.gz"
   sha256 "f7aa33b547b36ddb7e00ac23216b09ee08212161936d3b9e247bcce95fd2e041"
   license "GPL-3.0"
-  head "https://github.com/srajanbuilds/sranime-cli.git", branch: "master"
+  head "https://github.com/srajanbuilds/sranime-cli.git", branch: "main"
 
   depends_on "ffmpeg"
   depends_on "fzf"

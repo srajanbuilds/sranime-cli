@@ -13,7 +13,7 @@
 <a href="matrix.md"><img src="/.assets/matrix-logo.svg" height=110></a>
 <br>
 <a href="https://discord.gg/aqu7GpqVmR">Discord</a>
-<a href="https://github.com/srajanbuilds/sranime-cli/blob/master/matrix.md">Matrix</a>
+<a href="https://github.com/srajanbuilds/sranime-cli/blob/main/matrix.md">Matrix</a>
 </p>
 <a href="https://github.com/port19x"><img src="https://img.shields.io/badge/lead-port19x-lightblue"></a>
 <a href="https://github.com/CoolnsX"><img src="https://img.shields.io/badge/maintainer-CoolnsX-blue"></a>
