@@ -1,0 +1,37 @@
+#compdef sranime-cli
+
+_sranime_cli() {
+    local -a qualities
+    qualities=(
+        'best:Highest available quality'
+        'worst:Lowest available quality'
+        '1080p:1080p Full HD'
+        '720p:720p HD'
+        '480p:480p SD'
+        '360p:360p Low'
+    )
+
+    _arguments -s -S \
+        '(-c --continue)'{-c,--continue}'[Continue watching from history]' \
+        '(-d --download)'{-d,--download}'[Download the video instead of playing it]' \
+        '(-D --delete)'{-D,--delete}'[Delete history]' \
+        '(-l --logview)'{-l,--logview}'[Show logs]' \
+        '(-s --syncplay)'{-s,--syncplay}'[Use Syncplay to watch with friends]' \
+        '(-S --select-nth)'{-S,--select-nth}'[Select nth entry]:index:' \
+        '(-q --quality)'{-q,--quality}'[Specify the video quality]:quality:(())' \
+        '(-v --vlc)'{-v,--vlc}'[Use VLC to play the video]' \
+        '(-V --version)'{-V,--version}'[Show the version of the script]' \
+        '(-h --help)'{-h,--help}'[Show help message and exit]' \
+        '(-e --episode -r --range)'{-e,--episode,-r,--range}'[Specify the number of episodes to watch]:episode:' \
+        '--dub[Play dubbed version]' \
+        '--rofi[Use rofi instead of fzf for the interactive menu]' \
+        '--dmenu[Use dmenu instead of fzf for the interactive menu]' \
+        '--skip[Use ani-skip to skip the intro of the episode (mpv only)]' \
+        '--no-detach[Do not detach the player]' \
+        '--exit-after-play[Exit the player and return the exit code]' \
+        '(-N --nextep-countdown)'{-N,--nextep-countdown}'[Display a countdown to the next episode]' \
+        '(-U --update)'{-U,--update}'[Update the script]' \
+        '*:query:'
+}
+
+_sranime_cli "$@"
