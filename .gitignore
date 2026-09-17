@@ -1,0 +1,18 @@
+# Video downloads
+*.mp4
+*.mkv
+*.webm
+*.part
+*.ytdl
+
+# History & state
+sranime-hsts*
+*.log
+
+# Operating System & Editors
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
