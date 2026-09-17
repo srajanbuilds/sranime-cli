@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=sranime-cli
+Comment=A CLI tool to browse and watch anime
+Exec=sranime-cli
+Icon=video-player
+Terminal=true
+Type=Application
+Categories=AudioVideo;Video;Player;
+Keywords=anime;stream;player;
