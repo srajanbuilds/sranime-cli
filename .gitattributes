@@ -1,0 +1,12 @@
+* text=auto
+
+*.sh text eol=lf
+sranime-cli text eol=lf
+_sranime-cli-bash text eol=lf
+_sranime-cli-zsh text eol=lf
+*.fish text eol=lf
+Makefile text eol=lf
+*.1 text eol=lf
+*.md text
+*.png binary
+*.svg text
