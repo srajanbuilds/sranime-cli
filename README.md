@@ -36,6 +36,7 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
 
 ## Table of Contents
 
+- [Configuration](#configuration)
 - [Fixing errors](#fixing-errors)
 - [Install](#install)
   - [Tier 1: Linux, Mac, Android](#tier-1-support-linux-mac-android)
@@ -48,6 +49,34 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
 - [Homies](#homies)
 - [Contribution Guidelines](./CONTRIBUTING.md)
 - [Disclaimer](./disclaimer.md)
+
+## Configuration
+
+You can customize `sranime-cli` defaults using a configuration file located at `~/.config/sranime-cli/sranime-cli.conf` or `/etc/sranime-cli/sranime-cli.conf`.
+
+An example template `sranime-cli.conf` is provided in the repository:
+
+```sh
+# Preferred video player (e.g. mpv, vlc, iina)
+player="mpv"
+
+# Preferred audio mode: sub, dub
+mode="sub"
+
+# Default video quality: best, 1080p, 720p, 480p, 360p, worst
+quality="best"
+
+# Default download directory
+download_dir="$HOME/Downloads"
+
+# Interactive menu program: fzf, rofi, dmenu
+menu_program="fzf"
+
+# Automatically skip intros with ani-skip (mpv only)
+skip_intro=0
+```
+
+Environment variables (e.g. `SRANIME_CLI_PLAYER`, `SRANIME_CLI_QUALITY`) will override settings specified in the configuration file.
 
 ## Fixing errors
 
