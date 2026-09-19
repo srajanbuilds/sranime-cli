@@ -10,3 +10,4 @@ Makefile text eol=lf
 *.md text
 *.png binary
 *.svg text
+sranime-cli.conf text eol=lf

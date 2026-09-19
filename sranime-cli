@@ -447,33 +447,39 @@ ciphers='ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-A
 tls13_ciphers='TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'
 agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
-mode="${SRANIME_CLI_MODE:-sub}"
-download_dir="${SRANIME_CLI_DOWNLOAD_DIR:-.}"
-log_episode="${SRANIME_CLI_LOG:-1}"
-quality="${SRANIME_CLI_QUALITY:-best}"
+# load configuration
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/sranime-cli"
+config_file="${SRANIME_CLI_CONFIG:-$config_dir/sranime-cli.conf}"
+[ -f "/etc/sranime-cli/sranime-cli.conf" ] && . "/etc/sranime-cli/sranime-cli.conf"
+[ -f "$config_file" ] && . "$config_file"
+
+mode="${SRANIME_CLI_MODE:-${mode:-sub}}"
+download_dir="${SRANIME_CLI_DOWNLOAD_DIR:-${download_dir:-.}}"
+log_episode="${SRANIME_CLI_LOG:-${log_episode:-1}}"
+quality="${SRANIME_CLI_QUALITY:-${quality:-best}}"
 
 curl_exe=$(dep_ch_failover "curl_firefox135,curl_chrome136,curl_chrome116,curl_ff117,curl") || die "Program curl not found"
 
 case "$(uname -a | cut -d " " -f 1,3-)" in
     *Darwin*)
         cipher_flag="--ciphers $ciphers --tls13-ciphers $tls13_ciphers"
-        player_function="${SRANIME_CLI_PLAYER:-$(dep_ch_failover "iina,/Applications/IINA.app/Contents/MacOS/iina-cli,mpv,vlc")}" || die 'No player found. Looked for iina, mpv and vlc'
+        player_function="${SRANIME_CLI_PLAYER:-${player:-$(dep_ch_failover "iina,/Applications/IINA.app/Contents/MacOS/iina-cli,mpv,vlc")}}" || die 'No player found. Looked for iina, mpv and vlc'
         ;;                                                            # mac OS
-    *ndroid*) player_function="${SRANIME_CLI_PLAYER:-android_mpv}" ;;     # Android OS (termux)
-    *MINGW* | *WSL2*) player_function="${SRANIME_CLI_PLAYER:-mpv.exe}" ;; # Windows OS
+    *ndroid*) player_function="${SRANIME_CLI_PLAYER:-${player:-android_mpv}}" ;;     # Android OS (termux)
+    *MINGW* | *WSL2*) player_function="${SRANIME_CLI_PLAYER:-${player:-mpv.exe}}" ;; # Windows OS
     *ish*)
-        player_function="${SRANIME_CLI_PLAYER:-iSH}"
+        player_function="${SRANIME_CLI_PLAYER:-${player:-iSH}}"
         curl_exe=$(dep_ch_failover "curl_safari260_ios,$curl_exe")
         ;;                                                                                                                                                                                               # iOS (iSH)
-    *) player_function="${SRANIME_CLI_PLAYER:-$(dep_ch_failover "mpv,$HOME/.local/share/flatpak/app/io.mpv.Mpv/,/var/lib/flatpak/app/io.mpv.Mpv/,vlc")}" || die 'No player found. Looked for mpv and vlc' ;; # Linux OS
+    *) player_function="${SRANIME_CLI_PLAYER:-${player:-$(dep_ch_failover "mpv,$HOME/.local/share/flatpak/app/io.mpv.Mpv/,/var/lib/flatpak/app/io.mpv.Mpv/,vlc")}}" || die 'No player found. Looked for mpv and vlc' ;; # Linux OS
 esac
 
-player_extra_flags="${SRANIME_CLI_PLAYER_FLAGS:-""}"
-no_detach="${SRANIME_CLI_NO_DETACH:-0}"
-exit_after_play="${SRANIME_CLI_EXIT_AFTER_PLAY:-0}"
-skip_intro="${SRANIME_CLI_SKIP_INTRO:-0}"
-menu_program="${SRANIME_CLI_MENU:-fzf}"
-menu_extra_flags="${SRANIME_CLI_MENU_FLAGS:-""}"
+player_extra_flags="${SRANIME_CLI_PLAYER_FLAGS:-${player_extra_flags:-""}}"
+no_detach="${SRANIME_CLI_NO_DETACH:-${no_detach:-0}}"
+exit_after_play="${SRANIME_CLI_EXIT_AFTER_PLAY:-${exit_after_play:-0}}"
+skip_intro="${SRANIME_CLI_SKIP_INTRO:-${skip_intro:-0}}"
+menu_program="${SRANIME_CLI_MENU:-${menu_program:-fzf}}"
+menu_extra_flags="${SRANIME_CLI_MENU_FLAGS:-${menu_extra_flags:-""}}"
 
 # not opening from a terminal
 if [ ! -t 0 ]; then
