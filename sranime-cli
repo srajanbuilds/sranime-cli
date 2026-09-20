@@ -571,8 +571,13 @@ done
 info "Checking dependencies..."
 dep_ch "sed"
 dep_ch "grep"
-[ "$skip_intro" = 1 ] && dep_ch "ani-skip"
-dep_ch "$menu_program" # TODO: use dep_ch_failover to iterate through options
+[ "$skip_intro" = 1 ] && (command -v ani-skip >/dev/null 2>&1 || die "Program ani-skip not found (required for --skip). Install it or disable skip_intro.")
+if ! command -v "$menu_program" >/dev/null 2>&1; then
+    _fallback_menu=$(dep_ch_failover "fzf,rofi,dmenu") || die "No menu program found. Please install fzf, rofi, or dmenu."
+    menu_program="$_fallback_menu"
+    [ "$menu_program" = "fzf" ] && menu_multi_flag="-m"
+    [ "$menu_program" = "rofi" ] && menu_multi_flag="-multi-select"
+fi
 
 case "$player_function" in
     debug) ;;
@@ -580,7 +585,9 @@ case "$player_function" in
     android*) printf "\33[2K\rChecking of players on Android is disabled.\nmpv needs include=\"/storage/emulated/0/mpv/mpv.config.mp4\" in its mpv.conf, see the readme.\n" ;;
     *iSH*) printf "\33[2K\rChecking of players on iOS is disabled\n" ;;
     *flatpak*mpv*) dep_ch "flatpak" ;;
-    *) dep_ch "$player_function" ;;
+    *)
+        command -v "$player_function" >/dev/null 2>&1 || [ -e "$player_function" ] || die "Player '$player_function' not found. Please install it or set player in $config_file"
+        ;;
 esac
 
 # idk where to put this, so I put it here...
