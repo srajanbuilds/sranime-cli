@@ -31,4 +31,7 @@ uninstall:
 	rm -f $(DESTDIR)$(ZSHCOMPDIR)/_sranime-cli
 	rm -f $(DESTDIR)$(FISHCOMPDIR)/sranime-cli.fish
 
-.PHONY: all install uninstall
+test:
+	@sh test/smoke_test.sh
+
+.PHONY: all install uninstall test
