@@ -97,6 +97,14 @@ If after this the issue persists then open an issue.
 
 ## Install
 
+### Quick Install (Linux / macOS)
+
+Install or update `sranime-cli` with one command:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/srajanbuilds/sranime-cli/main/install.sh | sh
+```
+
 [![Packaging status](https://repology.org/badge/vertical-allrepos/sranime-cli.svg?minversion=4.14)](https://repology.org/project/sranime-cli/versions)
 
 ### Tier 1 Support: Linux, Mac, Android

@@ -12,3 +12,4 @@ Makefile text eol=lf
 *.svg text
 sranime-cli.conf text eol=lf
 .editorconfig text eol=lf
+install.sh text eol=lf
