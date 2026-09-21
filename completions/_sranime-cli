@@ -18,7 +18,7 @@ _sranime_cli() {
         '(-l --logview)'{-l,--logview}'[Show logs]' \
         '(-s --syncplay)'{-s,--syncplay}'[Use Syncplay to watch with friends]' \
         '(-S --select-nth)'{-S,--select-nth}'[Select nth entry]:index:' \
-        '(-q --quality)'{-q,--quality}'[Specify the video quality]:quality:(())' \
+        '(-q --quality)'{-q,--quality}'[Specify the video quality]:quality:(($qualities))' \
         '(-v --vlc)'{-v,--vlc}'[Use VLC to play the video]' \
         '(-V --version)'{-V,--version}'[Show the version of the script]' \
         '(-h --help)'{-h,--help}'[Show help message and exit]' \
@@ -31,6 +31,8 @@ _sranime_cli() {
         '--exit-after-play[Exit the player and return the exit code]' \
         '(-N --nextep-countdown)'{-N,--nextep-countdown}'[Display a countdown to the next episode]' \
         '(-U --update)'{-U,--update}'[Update the script]' \
+        '--edit-config[Open user configuration file in default editor]' \
+        '--dump-config[Print active configuration values and exit]' \
         '*:query:'
 }
 

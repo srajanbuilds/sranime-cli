@@ -6,12 +6,12 @@ _sranime_cli() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts="-c --continue -d --download -D --delete -l --logview -s --syncplay -S --select-nth -q --quality -v --vlc -V --version -h --help -e --episode -r --range --dub --rofi --dmenu --skip --no-detach --exit-after-play -N --nextep-countdown -U --update"
+    opts="-c --continue -d --download -D --delete -l --logview -s --syncplay -S --select-nth -q --quality -v --vlc -V --version -h --help -e --episode -r --range --dub --rofi --dmenu --skip --no-detach --exit-after-play -N --nextep-countdown -U --update --edit-config --dump-config"
     qualities="best worst 360p 480p 720p 1080p"
 
     case "$prev" in
         -q|--quality)
-            COMPREPLY=( $(compgen -W "$qualities" -- "$cur") )
+            COMPREPLY=( $(compgen -W "${qualities}" -- "$cur") )
             return 0
             ;;
         -S|--select-nth|-e|--episode|-r|--range)
@@ -20,7 +20,7 @@ _sranime_cli() {
     esac
 
     if [[ "$cur" == -* ]]; then
-        COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+        COMPREPLY=( $(compgen -W "${opts}" -- "$cur") )
         return 0
     fi
 }
