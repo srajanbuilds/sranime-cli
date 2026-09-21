@@ -95,6 +95,8 @@ help_info() {
         Open configuration file in editor
       --dump-config
         Print active configuration values and exit
+      --doctor
+        Run system diagnostics and dependency check
     Some example usages:
       %s -q 720p banana fish
       %s --skip -S 2 one piece
@@ -104,6 +106,64 @@ help_info() {
       %s -e \"5 6\" blue lock
     \n" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}" "${0##*/}"
     exit 0
+}
+
+doctor_check() {
+    printf "\033[1;36msranime-cli system diagnostics:\033[0m\n\n"
+    _ok=0
+    _fail=0
+
+    _check_tool() {
+        _name="$1"
+        _req="$2"
+        if command -v "$_name" >/dev/null 2>&1; then
+            _ver=$( ("$_name" --version 2>/dev/null || "$_name" -v 2>/dev/null || printf "installed") | head -n 1 | cut -c 1-45)
+            printf "  \033[1;32m?\033[0m %-14s : %s\n" "$_name" "$_ver"
+            _ok=$((_ok + 1))
+        elif [ "$_req" = "required" ]; then
+            printf "  \033[1;31m?\033[0m %-14s : \033[1;31mNOT FOUND (required)\033[0m\n" "$_name"
+            _fail=$((_fail + 1))
+        else
+            printf "  \033[1;33m-\033[0m %-14s : not found (optional)\n" "$_name"
+        fi
+    }
+
+    printf "Core Tools:\n"
+    _check_tool "curl" "required"
+    _check_tool "sed" "required"
+    _check_tool "grep" "required"
+    _check_tool "patch" "optional"
+
+    printf "\nInteractive Frontends:\n"
+    _check_tool "fzf" "optional"
+    _check_tool "rofi" "optional"
+    _check_tool "dmenu" "optional"
+
+    printf "\nMedia Players:\n"
+    _check_tool "mpv" "optional"
+    _check_tool "vlc" "optional"
+    _check_tool "iina" "optional"
+    _check_tool "syncplay" "optional"
+
+    printf "\nDownloaders & Integrations:\n"
+    _check_tool "yt-dlp" "optional"
+    _check_tool "ffmpeg" "optional"
+    _check_tool "ani-skip" "optional"
+
+    printf "\nConfiguration & State:\n"
+    printf "  Config file   : %s (%s)\n" "$config_file" "$([ -f "$config_file" ] && printf "found" || printf "not found")"
+    printf "  History file  : %s (%s)\n" "$histfile" "$([ -f "$histfile" ] && printf "found" || printf "not found")"
+    printf "  Download dir  : %s (%s)\n" "$download_dir" "$([ -d "$download_dir" ] && printf "writable" || printf "missing")"
+
+    printf "\nNetwork Connectivity:\n"
+    if $curl_exe -sL --max-time 5 -I "https://hianime.at" >/dev/null 2>&1; then
+        printf "  \033[1;32m?\033[0m hianime.at   : accessible\n"
+    else
+        printf "  \033[1;33m-\033[0m hianime.at   : connection failed or blocked\n"
+    fi
+
+    printf "\nDiagnostics complete: %d ok, %d missing required.\n" "$_ok" "$_fail"
+    [ "$_fail" -eq 0 ] && exit 0 || exit 1
 }
 
 version_info() {
@@ -597,6 +657,9 @@ while [ $# -gt 0 ]; do
             printf "  menu_program:     %s\n" "$menu_program"
             printf "  skip_intro:       %s\n" "$skip_intro"
             exit 0
+            ;;
+        --doctor)
+            doctor_check
             ;;
         *) query="$(printf "%s" "$query $1" | sed 's|^ ||;s| |+|g')" ;;
     esac

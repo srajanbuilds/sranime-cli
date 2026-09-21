@@ -27,6 +27,9 @@ echo "[4b/6] Checking history options..."
 ./sranime-cli --show-history >/dev/null
 ./sranime-cli --clear-history >/dev/null
 
+echo "[4c/6] Checking doctor flag..."
+./sranime-cli --doctor >/dev/null
+
 echo "[5/6] Verifying no awk or wget in script (CI compliance)..."
 ! grep -w awk "./sranime-cli"
 ! grep -w wget "./sranime-cli"

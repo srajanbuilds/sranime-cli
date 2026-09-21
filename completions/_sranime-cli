@@ -34,6 +34,7 @@ _sranime_cli() {
         '(-U --update)'{-U,--update}'[Update the script]' \
         '--edit-config[Open user configuration file in default editor]' \
         '--dump-config[Print active configuration values and exit]' \
+        '--doctor[Run system diagnostics and dependency check]' \
         '*:query:'
 }
 

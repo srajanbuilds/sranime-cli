@@ -24,3 +24,4 @@ complete -c sranime-cli -s N -l nextep-countdown -d "Display countdown to next e
 complete -c sranime-cli -s U -l update -d "Update the script"
 complete -c sranime-cli -l edit-config -d "Open configuration file in editor"
 complete -c sranime-cli -l dump-config -d "Print active configuration values and exit"
+complete -c sranime-cli -l doctor -d "Run system diagnostics and dependency check"
