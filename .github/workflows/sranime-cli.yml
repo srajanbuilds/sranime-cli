@@ -44,3 +44,11 @@ jobs:
     - uses: actions/checkout@v4
     - name: verify that noone added wget
       run: '! grep wget "./sranime-cli"'
+
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run smoke tests
+      run: sh test/smoke_test.sh

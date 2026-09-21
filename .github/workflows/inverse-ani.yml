@@ -22,3 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: 'echo "Not required: did not modify sranime-cli"'
+
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "Not required: did not modify sranime-cli"'
