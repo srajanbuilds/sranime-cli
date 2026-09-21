@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Run DeadFinder
-      uses: hahwul/deadfinder@1.2.4
+      uses: hahwul/deadfinder@2.0.2
       id: broken-link
       with:
         command: file
