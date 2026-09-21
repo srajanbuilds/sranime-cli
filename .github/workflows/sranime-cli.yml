@@ -12,7 +12,7 @@ jobs:
     name: Shellcheck + Shfmt
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Run the sh-checker
       uses: luizm/action-sh-checker@master
       env:
@@ -25,7 +25,7 @@ jobs:
     name: Executable Bit
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: test exec bit
       run: test -x "./sranime-cli"
 
@@ -33,7 +33,7 @@ jobs:
     name: No Awk Allowed
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: verify that noone added awk
       run: '! grep awk "./sranime-cli"'
 
@@ -41,7 +41,7 @@ jobs:
     name: No Wget Allowed
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: verify that noone added wget
       run: '! grep wget "./sranime-cli"'
 
@@ -49,6 +49,6 @@ jobs:
     name: Smoke Tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Run smoke tests
       run: sh test/smoke_test.sh
