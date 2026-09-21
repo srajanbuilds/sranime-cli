@@ -89,6 +89,10 @@ help_info() {
         Display a countdown to the next episode
       -U, --update
         Update the script
+      --edit-config
+        Open configuration file in editor
+      --dump-config
+        Print active configuration values and exit
     Some example usages:
       %s -q 720p banana fish
       %s --skip -S 2 one piece
@@ -559,6 +563,26 @@ while [ $# -gt 0 ]; do
             dep_ch "patch"
             branch="${2:-$branch}"
             update_script
+            ;;
+        --edit-config)
+            [ ! -d "$config_dir" ] && mkdir -p "$config_dir"
+            [ ! -f "$config_file" ] && [ -f "/etc/sranime-cli/sranime-cli.conf" ] && cp "/etc/sranime-cli/sranime-cli.conf" "$config_file"
+            [ ! -f "$config_file" ] && : >"$config_file"
+            editor="${VISUAL:-${EDITOR:-nano}}"
+            command -v "$editor" >/dev/null 2>&1 || editor="vi"
+            "$editor" "$config_file"
+            exit 0
+            ;;
+        --dump-config)
+            printf "sranime-cli configuration:\n"
+            printf "  config_file:      %s\n" "$config_file"
+            printf "  mode:             %s\n" "$mode"
+            printf "  quality:          %s\n" "$quality"
+            printf "  download_dir:     %s\n" "$download_dir"
+            printf "  player_function:  %s\n" "$player_function"
+            printf "  menu_program:     %s\n" "$menu_program"
+            printf "  skip_intro:       %s\n" "$skip_intro"
+            exit 0
             ;;
         *) query="$(printf "%s" "$query $1" | sed 's|^ ||;s| |+|g')" ;;
     esac

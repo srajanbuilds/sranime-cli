@@ -78,6 +78,10 @@ skip_intro=0
 
 Environment variables (e.g. `SRANIME_CLI_PLAYER`, `SRANIME_CLI_QUALITY`) will override settings specified in the configuration file.
 
+Quick management:
+- Run `sranime-cli --edit-config` to quickly open or create your config file in your preferred `$EDITOR`.
+- Run `sranime-cli --dump-config` to inspect active configuration values.
+
 ## Fixing errors
 
 If you encounter `Blocked by cloudflare. Try installing curl-impersonate` then install `curl-impersonate` from your respective package manager.
