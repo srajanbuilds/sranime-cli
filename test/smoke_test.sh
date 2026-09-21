@@ -23,6 +23,10 @@ printf 'quality="720p"\nmode="dub"\n' > "$tmp_conf"
 SRANIME_CLI_CONFIG="$tmp_conf" ./sranime-cli -V >/dev/null
 rm -f "$tmp_conf"
 
+echo "[4b/6] Checking history options..."
+./sranime-cli --show-history >/dev/null
+./sranime-cli --clear-history >/dev/null
+
 echo "[5/6] Verifying no awk or wget in script (CI compliance)..."
 ! grep -w awk "./sranime-cli"
 ! grep -w wget "./sranime-cli"

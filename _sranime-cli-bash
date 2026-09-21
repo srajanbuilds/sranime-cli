@@ -6,7 +6,7 @@ _sranime_cli() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts="-c --continue -d --download -D --delete -l --logview -s --syncplay -S --select-nth -q --quality -v --vlc -V --version -h --help -e --episode -r --range --dub --rofi --dmenu --skip --no-detach --exit-after-play -N --nextep-countdown -U --update --edit-config --dump-config"
+    opts="-c --continue -d --download -D --delete --clear-history --show-history -l --logview -s --syncplay -S --select-nth -q --quality -v --vlc -V --version -h --help -e --episode -r --range --dub --rofi --dmenu --skip --no-detach --exit-after-play -N --nextep-countdown -U --update --edit-config --dump-config"
     qualities="best worst 360p 480p 720p 1080p"
 
     case "$prev" in

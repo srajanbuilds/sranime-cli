@@ -3,6 +3,8 @@
 complete -c sranime-cli -s c -l continue -d "Continue watching from history"
 complete -c sranime-cli -s d -l download -d "Download the video instead of playing it"
 complete -c sranime-cli -s D -l delete -d "Delete history"
+complete -c sranime-cli -l clear-history -d "Delete history"
+complete -c sranime-cli -l show-history -d "Display watch history and exit"
 complete -c sranime-cli -s l -l logview -d "Show logs"
 complete -c sranime-cli -s s -l syncplay -d "Use Syncplay to watch with friends"
 complete -c sranime-cli -s S -l select-nth -d "Select nth entry" -x

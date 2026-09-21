@@ -53,9 +53,11 @@ help_info() {
     Options:
       -c, --continue
         Continue watching from history
+      --show-history
+        Display watch history and exit
       -d, --download
         Download the video instead of playing it
-      -D, --delete
+      -D, --delete, --clear-history
         Delete history
       -l, --logview
         Show logs
@@ -530,11 +532,23 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -c | --continue) source=history ;;
+        --show-history)
+            if [ ! -s "$histfile" ]; then
+                info "Watch history is empty."
+            else
+                printf "Watch history (%s):\n" "$histfile"
+                while IFS='	' read -r ep_no anime_id anime_title; do
+                    [ -n "$anime_id" ] && printf "  Episode %-4s %s\n" "$ep_no" "$anime_title"
+                done <"$histfile"
+            fi
+            exit 0
+            ;;
         -d | --download)
             player_function=download
             ;;
-        -D | --delete)
+        -D | --delete | --clear-history)
             : >"$histfile"
+            info "Watch history cleared."
             exit 0
             ;;
         -l | --logview)

@@ -14,7 +14,8 @@ _sranime_cli() {
     _arguments -s -S \
         '(-c --continue)'{-c,--continue}'[Continue watching from history]' \
         '(-d --download)'{-d,--download}'[Download the video instead of playing it]' \
-        '(-D --delete)'{-D,--delete}'[Delete history]' \
+        '--show-history[Display watch history and exit]' \
+        '(-D --delete --clear-history)'{-D,--delete,--clear-history}'[Delete history]' \
         '(-l --logview)'{-l,--logview}'[Show logs]' \
         '(-s --syncplay)'{-s,--syncplay}'[Use Syncplay to watch with friends]' \
         '(-S --select-nth)'{-S,--select-nth}'[Select nth entry]:index:' \
