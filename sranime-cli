@@ -322,14 +322,14 @@ select_quality() {
 
 # gets embed url, collects direct links and selects one with desired quality into $episode
 get_video_link() {
-    hianime_m3u8 "$ep_no" "$mode" || die "No sources found for $mode!"
+    hianime_m3u8 "$ep_no" "$mode" || die "No sources found for $mode! Try --dub or check with --doctor"
     info "hianime.at links fetched"
     select_quality "$quality"
     # should never trigger but just in case
     if printf "%s" "$ep_list" | grep -q "^$ep_no$"; then
         [ -z "$video_link" ] && die "Episode is released, but no valid sources!"
     else
-        [ -z "$video_link" ] && die "Episode not released!"
+        [ -z "$video_link" ] && die "Episode not released! Check release schedule with -N flag"
     fi
 }
 
