@@ -1,24 +1,19 @@
 ---
-name: Feature request
-about: Are we missing your favorite feature?
-title: ''
-labels: 'priority 4: wishlist, type: feature request'
+name: Feature Request
+about: Suggest an idea for sranime-cli
+title: "[FEATURE] "
+labels: enhancement
 assignees: ''
-
 ---
 
-**Is your feature request related to a problem? Please describe.**
-There is a better player for mac users than mpv.
-It's called iina and is a mpv frontend written in swift.
-It bugs me that I can't use it yet.
+**Is your feature request related to a problem?**
+A clear and concise description of what the problem is.
 
 **Describe the solution you'd like**
-Please add iina, maybe through a `-i` flag analogous to the vlc `-v` flag
+A clear and concise description of what you want to happen.
 
 **Describe alternatives you've considered**
-Maybe support any player string by the user.
-But I assume thats drastically more difficult.
+A clear and concise description of any alternatives.
 
 **Additional context**
-iina is just an mpv frontend and accepts its flags.
-Needless to say it can play urls.
+Add any other context or screenshots about the feature request here.
