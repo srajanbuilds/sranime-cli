@@ -1,0 +1,37 @@
+name: 'Lint & Format'
+on:
+  pull_request:
+    paths:
+      - 'sranime-cli'
+      - 'lib/**/*.sh'
+      - 'test/**'
+      - 'install.sh'
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install shellcheck
+      run: sudo apt-get install -y shellcheck
+    - name: Lint sranime-cli
+      run: shellcheck -s sh -o all -e 2250 sranime-cli
+    - name: Lint lib modules
+      run: find lib/ -name '*.sh' -exec shellcheck -s sh -o all -e 2250 {} +
+    - name: Lint test scripts
+      run: shellcheck -s sh test/smoke_test.sh
+    - name: Lint installer
+      run: shellcheck -s sh install.sh
+
+  format-check:
+    name: Format Check (shfmt)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install shfmt
+      run: |
+        curl -fsSL "https://github.com/mvdan/sh/releases/download/v3.8.0/shfmt_v3.8.0_linux_amd64" -o /usr/local/bin/shfmt
+        chmod +x /usr/local/bin/shfmt
+    - name: Check formatting
+      run: shfmt -i 4 -ci -d sranime-cli
