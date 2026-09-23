@@ -1,48 +1,28 @@
-# Pull Request Template
-
-## Type of change
-
-- [ ] Bug fix
-- [ ] Feature
-- [ ] Documentation update
-
 ## Description
 
-*ramble here*
+<!-- A brief description of the changes in this PR -->
+
+## Type of Change
+
+- [ ] Bug fix (non-breaking change fixing an issue)
+- [ ] New feature (non-breaking change adding functionality)
+- [ ] Breaking change (fix or feature causing existing functionality to change)
+- [ ] Documentation update
+- [ ] CI/CD improvement
 
 ## Checklist
 
-- [ ] any anime playing
-- [ ] bumped version
----
-- [ ] next, prev, replay and select work
-- [ ] `-c` history and continue work
-- [ ] `-d` downloads work
-- [ ] `-e` (select episode) aka `-r` (range selection) works
-- [ ] `-S` select index works
-- [ ] `-q` quality works
-- [ ] `-s` syncplay works
-- [ ] `-v` vlc works
-- [ ] `--dub` and regular (sub) mode both work
-- [ ] `--nextep-countdown` countdown to next ep works
----
-- [ ] `-h` help info is up to date
-- [ ] Readme is up to date
-- [ ] Man page is up to date
+- [ ] I have run `shellcheck -s sh -o all -e 2250 sranime-cli` with no errors
+- [ ] I have run `shfmt -i 4 -ci -d sranime-cli` with no errors
+- [ ] I have updated documentation (if applicable)
+- [ ] I have bumped the version number (if applicable)
+- [ ] I have tested my changes locally
+- [ ] Existing tests pass (`make test`)
 
-## Additional Testcases
+## Testing
 
-*(these don't block a merge)*
+<!-- Describe the tests you ran and how to reproduce -->
 
-- [ ] `--skip` ani-skip works
-- [ ] `--no-detach` no detach works
-- [ ] `--exit-after-play` auto exit after playing works
+## Screenshots (if applicable)
 
-## Copy Pasta
-
-```
-./sranime-cli -V
-./sranime-cli -S 1 -e 1 -d flcl
-./sranime-cli -S 1 -e 1 -q worst -v flcl
-./sranime-cli -c -s --dub
-```
+<!-- Add screenshots to help explain your changes -->

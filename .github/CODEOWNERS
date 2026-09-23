@@ -1,3 +1,13 @@
-* @port19x
-README.md @justchokingaround @port19x
-sranime-cli @Derisis13 @port19x
+# Default owners for the repo
+* @srajanbuilds
+
+# Core script
+/sranime-cli @srajanbuilds
+/lib/ @srajanbuilds
+
+# CI/CD
+/.github/ @srajanbuilds
+
+# Documentation
+/README.md @srajanbuilds
+/CHANGELOG.md @srajanbuilds
