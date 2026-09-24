@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version_number="5.1.2"
+version_number="5.2.0"
 
 # UI
 
@@ -95,6 +95,8 @@ help_info() {
         Open configuration file in editor
       --dump-config
         Print active configuration values and exit
+      --list-providers
+        List available stream providers
       --doctor
         Run system diagnostics and dependency check
     Some example usages:
@@ -656,6 +658,17 @@ while [ $# -gt 0 ]; do
             printf "  player_function:  %s\n" "$player_function"
             printf "  menu_program:     %s\n" "$menu_program"
             printf "  skip_intro:       %s\n" "$skip_intro"
+            exit 0
+            ;;
+        --list-providers)
+            printf "Available stream providers:\n"
+            printf "  hianime (built-in, default)\n"
+            if [ -d "lib/sranime-cli/providers" ]; then
+                for _pf in lib/sranime-cli/providers/*.sh; do
+                    [ -f "$_pf" ] || continue
+                    printf "  %s\n" "$(basename "$_pf" .sh)"
+                done
+            fi
             exit 0
             ;;
         --doctor)
