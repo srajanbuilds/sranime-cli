@@ -40,3 +40,15 @@ if command -v make >/dev/null 2>&1; then
 fi
 
 echo "All smoke tests passed successfully!"
+
+echo "[7/8] Running CLI flag tests..."
+sh test/test_cli_flags.sh
+
+echo "[8/8] Checking for stale ani-cli references..."
+if grep -rn "ani-cli" sranime-cli lib/ test/ install.sh Makefile 2>/dev/null | grep -v "ani-skip" | grep -v "backfill"; then
+    echo "Error: Found ani-cli references that should be sranime-cli"
+    exit 1
+fi
+echo "No stale references found."
+echo ""
+echo "All extended tests passed successfully!"
