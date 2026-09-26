@@ -576,7 +576,7 @@ apk del grep sed curl fzf git ffmpeg ncurses
 - ani-skip (optional, for auto-skipping anime intros)
 - patch - Self updating
 
-### Ani-Skip
+### ani-skip (External)
 
 Ani-skip is a script to automatically skip anime opening sequences, making it easier to watch your favorite shows without having to manually skip the intros each time (from the original [README](https://github.com/synacktraa/ani-skip/tree/master#a-script-to-automatically-skip-anime-opening-sequences-making-it-easier-to-watch-your-favorite-shows-without-having-to-manually-skip-the-intros-each-time)).
 
