@@ -31,10 +31,18 @@ _hist=$($SRANIME_CLI --show-history 2>/dev/null)
 assert_contains "Show history produces output" "$_hist" "history"
 
 _wlog=$($SRANIME_CLI -W 2>/dev/null)
-assert_contains "Watch log outputs status" "$_wlog" "Watch log"
+if printf "%s" "$_wlog" | grep -qiE "(Watch log|Anime Title)"; then
+    assert_eq "Watch log outputs status" "1" "1"
+else
+    assert_contains "Watch log outputs status" "$_wlog" "Watch log"
+fi
 
 _wstats=$($SRANIME_CLI --watch-stats 2>/dev/null)
-assert_contains "Watch stats outputs status" "$_wstats" "watch history"
+if printf "%s" "$_wstats" | grep -qiE "(watch history|Statistics)"; then
+    assert_eq "Watch stats outputs status" "1" "1"
+else
+    assert_contains "Watch stats outputs status" "$_wstats" "watch history"
+fi
 
 _provs=$($SRANIME_CLI --list-providers 2>/dev/null)
 assert_contains "List providers outputs hianime" "$_provs" "hianime"

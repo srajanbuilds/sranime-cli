@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive test suite for watchlog module (`test/test_watchlog.sh`).
 - Dynamic library path resolution (`SRANIME_LIB_DIR`).
 
+### Optimized
+- Accelerated MPV streaming with instant window rendering (`--force-window=immediate`), zero python yt-dlp delay on direct HLS links (`--ytdl=no`), and high-throughput HLS chunk buffer parameters (`--cache=yes --demuxer-max-bytes=100M --demuxer-readahead-secs=20`).
+- Prevented Windows console lockups by adding `--no-terminal` flag to background MPV process on Windows.
+- Implemented lazy-loading of secondary modules (`watchlog`, `watchlist`, `config`, `notify`) to minimize startup file I/O latency.
+- Fast-pathed `curl` binary detection to eliminate repetitive PATH traversal on Windows.
+- Optimized default search and episode resolution path to avoid redundant subshell nesting on Windows/MSYS2.
+
 ## [5.2.0] - 2026-09-25
 
 ### Added

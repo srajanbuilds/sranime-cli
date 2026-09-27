@@ -6,18 +6,24 @@ notify_send() {
     _body="${2:-}"
     _icon="${3:-video-x-generic}"
 
-    if command -v osascript >/dev/null 2>&1; then
-        osascript -e "display notification \"$_body\" with title \"$_title\"" 2>/dev/null
-        return
-    fi
-    if command -v notify-send >/dev/null 2>&1; then
-        notify-send -i "$_icon" -a "sranime-cli" "$_title" "$_body" 2>/dev/null
-        return
-    fi
-    if command -v termux-notification >/dev/null 2>&1; then
-        termux-notification --title "$_title" --content "$_body" 2>/dev/null
-        return
-    fi
+    case "$(uname -s 2>/dev/null)" in
+        *Darwin*)
+            if command -v osascript >/dev/null 2>&1; then
+                osascript -e "display notification \"$_body\" with title \"$_title\"" 2>/dev/null
+                return
+            fi
+            ;;
+        *Linux*)
+            if command -v notify-send >/dev/null 2>&1; then
+                notify-send -i "$_icon" -a "sranime-cli" "$_title" "$_body" 2>/dev/null
+                return
+            fi
+            if command -v termux-notification >/dev/null 2>&1; then
+                termux-notification --title "$_title" --content "$_body" 2>/dev/null
+                return
+            fi
+            ;;
+    esac
     printf "\033[1;35m[%s]\033[0m %s\n" "$_title" "$_body" >&2
 }
 
