@@ -93,6 +93,8 @@ help_info() {
         Update the script
       --edit-config
         Open configuration file in editor
+      --validate-config
+        Validate configuration file for syntax errors
       --dump-config
         Print active configuration values and exit
       --watchlist
@@ -651,6 +653,21 @@ while [ $# -gt 0 ]; do
             editor="${VISUAL:-${EDITOR:-nano}}"
             command -v "$editor" >/dev/null 2>&1 || editor="vi"
             "$editor" "$config_file"
+            exit 0
+            ;;
+        --validate-config)
+            if [ -f "$config_file" ]; then
+                printf "Validating %s...\n" "$config_file"
+                if . lib/sranime-cli/config.sh 2>/dev/null && validate_config "$config_file"; then
+                    printf "\033[1;32mConfiguration is valid.\033[0m\n"
+                else
+                    printf "\033[1;31mConfiguration has issues.\033[0m\n"
+                    exit 1
+                fi
+            else
+                printf "No configuration file found at %s\n" "$config_file"
+                printf "Create one with: sranime-cli --edit-config\n"
+            fi
             exit 0
             ;;
         --dump-config)
