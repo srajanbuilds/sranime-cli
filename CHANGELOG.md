@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.3.0] - 2026-09-28
 
 ### Added
+- Multi-provider fallback engine (`lib/sranime-cli/providers.sh`) with zero-downtime automatic failover.
+- AllAnime provider plugin (`lib/sranime-cli/providers/allanime.sh`) with GraphQL search API.
+- GogoAnime / Anitaku provider plugin (`lib/sranime-cli/providers/gogo.sh`) with HTML scraper fallback.
+- `-p, --provider` CLI option to manually select or force stream provider.
+- Enhanced self-updater (`-U / --update`) featuring semver comparison and atomic script replacement without external patch dependencies.
+- Native desktop notifications connected for playback start and download completion.
+- Provider test suite (`test/test_providers.sh`).
 - Lifetime Watch Log and Personal Anime Journal (`lib/sranime-cli/watchlog.sh`).
 - `-W, --watch-log` flag to display complete chronological watch and download history with optional title filter.
 - `--watch-stats` flag to calculate and display viewing analytics (episodes watched, total time, most-watched series).

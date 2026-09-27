@@ -1,31 +1,128 @@
 #!/bin/sh
-# sranime-cli provider registry
+# sranime-cli provider registry & multi-provider fallback engine
 #
-# Each provider module exposes three functions:
-#   <provider>_search <query>     -> id\tname (per line)
-#   <provider>_episodes <id>      -> ep_id\tep_no (per line)
-#   <provider>_m3u8 <ep_no> <mode> -> sets: links, sub_link, mal_id, refr
-#
-# The active provider is selected via $SRANIME_CLI_PROVIDER or defaults to "hianime".
+# Supported providers:
+#   - hianime  (default primary, multi-server extraction)
+#   - allanime (fast GraphQL API fallback)
+#   - gogo     (gogoanime / anitaku HTML scraper fallback)
 
-PROVIDERS_DIR="${PROVIDERS_DIR:-$(dirname "$0")/providers}"
+if [ -z "$PROVIDERS_DIR" ]; then
+    if [ -n "$SRANIME_LIB_DIR" ] && [ -d "$SRANIME_LIB_DIR/providers" ]; then
+        PROVIDERS_DIR="$SRANIME_LIB_DIR/providers"
+    elif [ -d "lib/sranime-cli/providers" ]; then
+        PROVIDERS_DIR="$(pwd)/lib/sranime-cli/providers"
+    else
+        PROVIDERS_DIR="/usr/local/lib/sranime-cli/providers"
+    fi
+fi
+export PROVIDERS_DIR
+
+AVAILABLE_PROVIDERS="hianime allanime gogo"
+ACTIVE_PROVIDER="${SRANIME_CLI_PROVIDER:-hianime}"
 
 load_provider() {
-    _provider="${1:-hianime}"
-    _provider_file="${PROVIDERS_DIR}/${_provider}.sh"
-    if [ -f "$_provider_file" ]; then
-        . "$_provider_file"
-    else
-        [ "$_provider" != "hianime" ] && printf "Warning: provider '%s' not found, falling back to hianime\n" "$_provider" >&2
+    _prov="${1:-$ACTIVE_PROVIDER}"
+    _pfile="${PROVIDERS_DIR}/${_prov}.sh"
+    if [ -f "$_pfile" ]; then
+        . "$_pfile"
+    elif [ "$_prov" != "hianime" ]; then
+        printf "\033[1;33m[provider]\033[0m Provider '%s' file not found at %s, using built-in\n" "$_prov" "$_pfile" >&2
     fi
 }
 
-list_providers() {
-    printf "hianime (built-in)\n"
-    if [ -d "$PROVIDERS_DIR" ]; then
-        for _p in "$PROVIDERS_DIR"/*.sh; do
-            [ -f "$_p" ] || continue
-            printf "%s\n" "$(basename "$_p" .sh)"
-        done
+# Search with automatic multi-provider fallback
+# Usage: provider_search <query>
+provider_search() {
+    _query="$1"
+    _results=""
+
+    # 1. Try active provider
+    case "$ACTIVE_PROVIDER" in
+        allanime)
+            load_provider "allanime"
+            _results=$(allanime_search "$_query" 2>/dev/null)
+            ;;
+        gogo)
+            load_provider "gogo"
+            _results=$(gogo_search "$_query" 2>/dev/null)
+            ;;
+        *)
+            # Built-in hianime
+            _results=$(hianime_search "$_query" 2>/dev/null)
+            ;;
+    esac
+
+    # Return if successful
+    if [ -n "$_results" ]; then
+        printf '%s\n' "$_results"
+        return 0
     fi
+
+    # 2. If provider was forced by user, do not fallback
+    if [ -n "$SRANIME_CLI_PROVIDER_FORCE" ]; then
+        return 1
+    fi
+
+    # 3. Fallback chain
+    for _fallback in $AVAILABLE_PROVIDERS; do
+        [ "$_fallback" = "$ACTIVE_PROVIDER" ] && continue
+        printf "\033[1;33m[sranime-cli]\033[0m %s returned no results, trying fallback: %s...\n" "$ACTIVE_PROVIDER" "$_fallback" >&2
+
+        load_provider "$_fallback"
+        case "$_fallback" in
+            allanime) _results=$(allanime_search "$_query" 2>/dev/null) ;;
+            gogo)     _results=$(gogo_search "$_query" 2>/dev/null) ;;
+            hianime)  _results=$(hianime_search "$_query" 2>/dev/null) ;;
+        esac
+
+        if [ -n "$_results" ]; then
+            ACTIVE_PROVIDER="$_fallback"
+            export ACTIVE_PROVIDER
+            printf "\033[1;32m[sranime-cli]\033[0m Connected to provider: %s\n" "$ACTIVE_PROVIDER" >&2
+            printf '%s\n' "$_results"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Fetch episode list for active provider
+# Usage: provider_episodes <anime_id>
+provider_episodes() {
+    _id="$1"
+    case "$ACTIVE_PROVIDER" in
+        allanime)
+            load_provider "allanime"
+            allanime_episodes "$_id"
+            ;;
+        gogo)
+            load_provider "gogo"
+            gogo_episodes "$_id"
+            ;;
+        *)
+            hianime_episodes "$_id"
+            ;;
+    esac
+}
+
+# Check provider health
+# Usage: check_provider_health <provider_name>
+check_provider_health() {
+    _p="$1"
+    case "$_p" in
+        hianime)  curl -sI --max-time 3 "https://hianime.at" >/dev/null 2>&1 ;;
+        allanime) curl -sI --max-time 3 "https://api.allanime.day" >/dev/null 2>&1 ;;
+        gogo)     curl -sI --max-time 3 "https://anitaku.to" >/dev/null 2>&1 ;;
+        *) return 1 ;;
+    esac
+}
+
+# List available stream providers with status
+list_providers() {
+    printf "\033[1;36mAvailable Stream Providers:\033[0m\n\n"
+    printf "  \033[1;32m* hianime\033[0m  (primary default)  - HiAnime / Zoro extraction engine\n"
+    printf "    allanime (secondary backup) - AllAnime GraphQL API engine\n"
+    printf "    gogo     (tertiary backup)  - GogoAnime / Anitaku scraper\n"
+    printf "\nUsage: sranime-cli -p <provider> <query>\n"
 }

@@ -36,6 +36,11 @@ assert_contains "Watch log outputs status" "$_wlog" "Watch log"
 _wstats=$($SRANIME_CLI --watch-stats 2>/dev/null)
 assert_contains "Watch stats outputs status" "$_wstats" "watch history"
 
+_provs=$($SRANIME_CLI --list-providers 2>/dev/null)
+assert_contains "List providers outputs hianime" "$_provs" "hianime"
+assert_contains "List providers outputs allanime" "$_provs" "allanime"
+assert_contains "List providers outputs gogo" "$_provs" "gogo"
+
 $SRANIME_CLI --doctor >/dev/null 2>&1 || true
 
 print_test_summary

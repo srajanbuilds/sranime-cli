@@ -12,6 +12,17 @@ for _cand in "$_bin_dir/lib/sranime-cli" "/usr/local/lib/sranime-cli" "/usr/lib/
 done
 export SRANIME_LIB_DIR
 
+# Load modular infrastructure
+if [ -n "$SRANIME_LIB_DIR" ]; then
+    . "$SRANIME_LIB_DIR/utils.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/network.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/notify.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/providers.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/watchlist.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/watchlog.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/config.sh" 2>/dev/null || true
+fi
+
 # UI
 
 # shellcheck disable=SC2086
@@ -75,6 +86,8 @@ help_info() {
         Use Syncplay to watch with friends
       -S, --select-nth
         Select nth entry
+      -p, --provider
+        Specify stream provider (hianime, allanime, gogo)
       -q, --quality
         Specify the video quality
       -v, --vlc
@@ -202,20 +215,26 @@ version_info() {
 # Bookkeeping
 
 update_script() {
-    info "[branch:$branch] Checking for Update.."
-    update="$($curl_exe --fail-with-body -sL -A "$agent" "https://raw.githubusercontent.com/srajanbuilds/sranime-cli/$branch/sranime-cli")" || die "[branch:$branch] Connection error: $update"
+    info "[branch:$branch] Checking for updates..."
+    update="$($curl_exe --fail-with-body -sL -A "$agent" "https://raw.githubusercontent.com/srajanbuilds/sranime-cli/$branch/sranime-cli" 2>/dev/null)" || die "Failed to connect to update server"
     new_version="$(printf "%s" "$update" | sed -nE 's|^version_number="([^"]+)"$|\1|p')"
-    [ -z "$new_version" ] && die "[branch:$branch] Invalid response."
-    printf "%s" "$update" | grep -q "^version_number" || die "[branch:$branch] Invalid response."
-    update="$(printf "%s\n" "$update" | diff -u "$0" -)"
-    if [ -z "$update" ]; then
-        info "[branch:$branch] Script is up to date :) ($version_number)"
+    [ -z "$new_version" ] && die "Failed to retrieve remote version"
+
+    if command -v semver_ge >/dev/null 2>&1 && semver_ge "$version_number" "$new_version"; then
+        info "sranime-cli is already up to date ($version_number)"
+        exit 0
+    fi
+
+    info "New version available: $new_version (current: $version_number). Updating..."
+    _tmp_target="${0}.tmp.$$"
+    printf "%s\n" "$update" >"$_tmp_target"
+    if [ -s "$_tmp_target" ] && sh -n "$_tmp_target" 2>/dev/null; then
+        chmod +x "$_tmp_target"
+        mv "$_tmp_target" "$0" || die "Permission denied updating $0. Try running with sudo"
+        info "Successfully updated sranime-cli: $version_number -> $new_version"
     else
-        if printf "%s\n" "$update" | patch "$0" -; then
-            info "[branch:$branch] Updated: $version_number -> $new_version"
-        else
-            die "[branch:$branch] Failed to update. Read the above line!"
-        fi
+        rm -f "$_tmp_target"
+        die "Update validation failed. Aborted without modifying script."
     fi
     exit 0
 }
@@ -449,8 +468,14 @@ update_history() {
 # $1 = video link, $2 = video name, $3 = extra flags
 download() {
     [ -n "$sub_link" ] && $curl_exe -sL -A "$agent" -e "$refr" --max-time 10 $cipher_flag "$sub_link" -o "$download_dir/$2.vtt"
-    command -v "yt-dlp" >/dev/null && yt-dlp --referer "$refr" "$1" --no-skip-unavailable-fragments --fragment-retries infinite -N 16 -o "$download_dir/$2.mp4" $3 && return 0
-    ffmpeg -extension_picky 0 -referer "$refr" -loglevel error -stats -i "$1" -c copy "$download_dir/$2.mp4" $3
+    if command -v "yt-dlp" >/dev/null && yt-dlp --referer "$refr" "$1" --no-skip-unavailable-fragments --fragment-retries infinite -N 16 -o "$download_dir/$2.mp4" $3; then
+        command -v notify_download_complete >/dev/null 2>&1 && notify_download_complete "$anime_title" "$ep_no" "$download_dir"
+        return 0
+    fi
+    if ffmpeg -extension_picky 0 -referer "$refr" -loglevel error -stats -i "$1" -c copy "$download_dir/$2.mp4" $3; then
+        command -v notify_download_complete >/dev/null 2>&1 && notify_download_complete "$anime_title" "$ep_no" "$download_dir"
+        return 0
+    fi
 }
 
 # mpv-android takes no options from the intent, so they go through a file the user includes in mpv.conf
@@ -618,6 +643,13 @@ while [ $# -gt 0 ]; do
                 *) player_function="syncplay" ;;
             esac
             ;;
+        -p | --provider)
+            [ $# -lt 2 ] && die "missing argument!"
+            ACTIVE_PROVIDER="$2"
+            SRANIME_CLI_PROVIDER_FORCE="1"
+            export ACTIVE_PROVIDER SRANIME_CLI_PROVIDER_FORCE
+            shift
+            ;;
         -q | --quality)
             [ $# -lt 2 ] && die "missing argument!"
             quality="$2"
@@ -671,7 +703,6 @@ while [ $# -gt 0 ]; do
         --skip) skip_intro=1 ;;
         -N | --nextep-countdown) source=nextep ;;
         -U | --update)
-            dep_ch "patch"
             branch="${2:-$branch}"
             update_script
             ;;
@@ -721,13 +752,10 @@ while [ $# -gt 0 ]; do
             exit 0
             ;;
         --list-providers)
-            printf "Available stream providers:\n"
-            printf "  hianime (built-in, default)\n"
-            if [ -d "lib/sranime-cli/providers" ]; then
-                for _pf in lib/sranime-cli/providers/*.sh; do
-                    [ -f "$_pf" ] || continue
-                    printf "  %s\n" "$(basename "$_pf" .sh)"
-                done
+            if command -v list_providers >/dev/null 2>&1; then
+                list_providers
+            else
+                printf "hianime (built-in)\n"
             fi
             exit 0
             ;;
@@ -802,7 +830,11 @@ case "$source" in
         [ -z "${index##*[!0-9]*}" ] || anime_id=$(printf "%s" "$anime_list" | sed -n "${index}p" | cut -f 1)
         [ -z "$anime_id" ] && exit 1
         anime_title=$(printf "%s" "$anime_list" | grep "^$anime_id	" | cut -f 2 | sed 's| - episode.*||')
-        episode_maps="$(hianime_episodes "$anime_id")" || exit 1
+        if command -v provider_episodes >/dev/null 2>&1; then
+            episode_maps="$(provider_episodes "$anime_id")" || exit 1
+        else
+            episode_maps="$(hianime_episodes "$anime_id")" || exit 1
+        fi
         ep_list="$(printf "%s" "$episode_maps" | cut -f 2)"
         ep_no=$(printf "%s" "$anime_list" | grep "^$anime_id	" | sed -nE 's/.*- episode (.+)$/\1/p')
         ;;
@@ -820,14 +852,22 @@ case "$source" in
 
         query=$(printf "%s" "$query" | sed 's| |+|g')
 
-        anime_list=$(hianime_search "$query") || exit 1
+        if command -v provider_search >/dev/null 2>&1; then
+            anime_list=$(provider_search "$query") || die "No results found across available providers!"
+        else
+            anime_list=$(hianime_search "$query") || exit 1
+        fi
         [ -z "$anime_list" ] && die "No results found!"
         [ "$index" -eq "$index" ] 2>/dev/null && result=$(printf "%s" "$anime_list" | sed -n "${index}p")
         [ -z "$index" ] && result=$(printf "%s" "$anime_list" | nl -w 2 | sed 's/^[[:space:]]//' | nth "Select anime: ")
         [ -z "$result" ] && die "Invalid anime selection"
         anime_title="$(printf "%s" "$result" | cut -f 2)"
         anime_id="$(printf "%s" "$result" | cut -f 1)"
-        episode_maps="$(hianime_episodes "$anime_id")" || exit 1
+        if command -v provider_episodes >/dev/null 2>&1; then
+            episode_maps="$(provider_episodes "$anime_id")" || exit 1
+        else
+            episode_maps="$(hianime_episodes "$anime_id")" || exit 1
+        fi
         ep_list="$(printf '%s' "$episode_maps" | cut -f 2)"
         [ -z "$ep_no" ] && ep_no=$(printf "%s" "$ep_list" | nth "Select episode: " "$menu_multi_flag")
         [ -z "$ep_no" ] && die "Invalid episode selection"
