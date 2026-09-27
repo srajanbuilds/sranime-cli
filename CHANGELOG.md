@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-09-28
+
+### Added
+- Lifetime Watch Log and Personal Anime Journal (`lib/sranime-cli/watchlog.sh`).
+- `-W, --watch-log` flag to display complete chronological watch and download history with optional title filter.
+- `--watch-stats` flag to calculate and display viewing analytics (episodes watched, total time, most-watched series).
+- `--watch-export [json|csv]` flag to export viewing history for spreadsheets, AniList, or personal backups.
+- `--clear-watch-log` flag to reset lifetime watch logs.
+- Automatic event hooks logging both playback sessions and downloaded episodes.
+- Comprehensive test suite for watchlog module (`test/test_watchlog.sh`).
+- Dynamic library path resolution (`SRANIME_LIB_DIR`).
+
 ## [5.2.0] - 2026-09-25
 
 ### Added

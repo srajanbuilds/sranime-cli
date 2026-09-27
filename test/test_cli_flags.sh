@@ -19,6 +19,8 @@ assert_contains "Help contains --continue flag" "$_help" "--continue"
 assert_contains "Help contains --download flag" "$_help" "--download"
 assert_contains "Help contains --doctor flag" "$_help" "--doctor"
 assert_contains "Help contains --edit-config flag" "$_help" "--edit-config"
+assert_contains "Help contains --watch-log flag" "$_help" "--watch-log"
+assert_contains "Help contains --watch-stats flag" "$_help" "--watch-stats"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows mode" "$_config" "mode:"
@@ -27,6 +29,12 @@ assert_contains "Dump config shows player" "$_config" "player_function:"
 
 _hist=$($SRANIME_CLI --show-history 2>/dev/null)
 assert_contains "Show history produces output" "$_hist" "history"
+
+_wlog=$($SRANIME_CLI -W 2>/dev/null)
+assert_contains "Watch log outputs status" "$_wlog" "Watch log"
+
+_wstats=$($SRANIME_CLI --watch-stats 2>/dev/null)
+assert_contains "Watch stats outputs status" "$_wstats" "watch history"
 
 $SRANIME_CLI --doctor >/dev/null 2>&1 || true
 

@@ -1,7 +1,7 @@
 class SranimeCli < Formula
   desc "Cli tool to browse and play anime"
   homepage "https://github.com/srajanbuilds/sranime-cli"
-  url "https://github.com/srajanbuilds/sranime-cli/archive/refs/tags/v5.2.0.tar.gz"
+  url "https://github.com/srajanbuilds/sranime-cli/archive/refs/tags/v5.3.0.tar.gz"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   license "GPL-3.0"
   head "https://github.com/srajanbuilds/sranime-cli.git", branch: "main"

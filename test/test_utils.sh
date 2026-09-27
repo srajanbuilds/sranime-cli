@@ -21,7 +21,7 @@ assert_eq() {
 assert_contains() {
     _TESTS_RUN=$((_TESTS_RUN + 1))
     _desc="$1"; _haystack="$2"; _needle="$3"
-    if printf '%s' "$_haystack" | grep -q "$_needle"; then
+    if printf '%s' "$_haystack" | grep -q -F -e "$_needle"; then
         _TESTS_PASSED=$((_TESTS_PASSED + 1))
         printf "  \033[1;32mPASS\033[0m %s\n" "$_desc"
     else

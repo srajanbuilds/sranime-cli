@@ -45,7 +45,7 @@ echo "[7/8] Running CLI flag tests..."
 sh test/test_cli_flags.sh
 
 echo "[8/8] Checking for stale ani-cli references..."
-if grep -rn "ani-cli" sranime-cli lib/ test/ install.sh Makefile 2>/dev/null | grep -v "ani-skip" | grep -v "backfill"; then
+if grep -rn "ani-cli" sranime-cli lib/ test/ install.sh Makefile 2>/dev/null | grep -v "ani-skip" | grep -v "backfill" | grep -v "smoke_test.sh"; then
     echo "Error: Found ani-cli references that should be sranime-cli"
     exit 1
 fi

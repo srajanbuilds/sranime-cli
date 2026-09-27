@@ -1,6 +1,16 @@
 #!/bin/sh
 
-version_number="5.2.0"
+version_number="5.3.0"
+
+# Module directory resolution
+_bin_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)"
+for _cand in "$_bin_dir/lib/sranime-cli" "/usr/local/lib/sranime-cli" "/usr/lib/sranime-cli" "/usr/share/sranime-cli"; do
+    if [ -d "$_cand" ]; then
+        SRANIME_LIB_DIR="$_cand"
+        break
+    fi
+done
+export SRANIME_LIB_DIR
 
 # UI
 
@@ -103,6 +113,14 @@ help_info() {
         Clear the watchlist
       --list-providers
         List available stream providers
+      -W, --watch-log
+        Display lifetime watch log history
+      --watch-stats
+        Display viewing statistics and analytics
+      --watch-export [json|csv]
+        Export watch log to JSON or CSV (default: json)
+      --clear-watch-log
+        Clear the lifetime watch log
       --doctor
         Run system diagnostics and dependency check
     Some example usages:
@@ -162,6 +180,8 @@ doctor_check() {
     printf "  Config file   : %s (%s)\n" "$config_file" "$([ -f "$config_file" ] && printf "found" || printf "not found")"
     printf "  History file  : %s (%s)\n" "$histfile" "$([ -f "$histfile" ] && printf "found" || printf "not found")"
     printf "  Download dir  : %s (%s)\n" "$download_dir" "$([ -d "$download_dir" ] && printf "writable" || printf "missing")"
+    _watchlogfile="${SRANIME_CLI_HIST_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sranime-cli}/watch.log"
+    printf "  Watch log     : %s (%s)\n" "$_watchlogfile" "$([ -f "$_watchlogfile" ] && printf "found" || printf "not found")"
 
     printf "\nNetwork Connectivity:\n"
     if $curl_exe -sL --max-time 5 -I "https://hianime.at" >/dev/null 2>&1; then
@@ -412,6 +432,15 @@ update_history() {
         printf "%s\t%s\t%s\n" "$ep_no" "$anime_id" "$anime_title" >>"${histfile}.new"
     fi
     mv "${histfile}.new" "$histfile"
+
+    # Append to lifetime watch log
+    _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+    if [ -f "$_lib_dir/watchlog.sh" ]; then
+        . "$_lib_dir/watchlog.sh" 2>/dev/null
+        _log_action="WATCH"
+        [ "$player_function" = "download" ] && _log_action="DOWNLOAD"
+        watchlog_append "$_log_action" "$ep_no" "$anime_id" "$anime_title" "${active_provider:-hianime}"
+    fi
 }
 
 # PLAYING
@@ -700,6 +729,30 @@ while [ $# -gt 0 ]; do
                     printf "  %s\n" "$(basename "$_pf" .sh)"
                 done
             fi
+            exit 0
+            ;;
+        -W | --watch-log)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            . "$_lib_dir/watchlog.sh" 2>/dev/null || true
+            watchlog_show "$2"
+            exit 0
+            ;;
+        --watch-stats)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            . "$_lib_dir/watchlog.sh" 2>/dev/null || true
+            watchlog_stats
+            exit 0
+            ;;
+        --watch-export)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            . "$_lib_dir/watchlog.sh" 2>/dev/null || true
+            watchlog_export "${2:-json}"
+            exit 0
+            ;;
+        --clear-watch-log)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            . "$_lib_dir/watchlog.sh" 2>/dev/null || true
+            watchlog_clear
             exit 0
             ;;
         --doctor)

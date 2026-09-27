@@ -88,6 +88,18 @@ Display the saved anime watchlist.
 \fB\--watchlist-clear\fR
 Clear all entries from the watchlist.
 .TP
+\fB\-W\fR, \fB\--watch-log\fR [\fIfilter\fR]
+Display the lifetime watch log history, optionally filtered by title.
+.TP
+\fB\--watch-stats\fR
+Display comprehensive viewing analytics, total time watched, and top series.
+.TP
+\fB\--watch-export\fR [\fBjson\fR|\fBcsv\fR]
+Export the lifetime watch log into structured JSON or CSV format.
+.TP
+\fB\--clear-watch-log\fR
+Clear the lifetime watch log.
+.TP
 \fB\--list-providers\fR
 List available stream providers and exit.
 .PP
@@ -155,6 +167,9 @@ History file storing watched anime and episode progress.
 .TP
 .I ~/.local/state/sranime-cli/watchlist
 Persistent watchlist file for saved anime.
+.TP
+.I ~/.local/state/sranime-cli/watch.log
+Lifetime append-only journal of all watched and downloaded anime episodes.
 .SH BUGS
 Use the GitHub issue tracker: https://github.com/srajanbuilds/sranime-cli/issues
 .SH COPYRIGHT
