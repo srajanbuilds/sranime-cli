@@ -39,7 +39,13 @@ nth() {
     [ "$_line_count" -eq 1 ] && printf "%s" "$_stdin" | cut -f 2,3 && return 0
     _prompt="$1"
     [ $# -ne 1 ] && _multi_flag="$2"
-    _line=$(printf "%s" "$_stdin" | cut -f 1,3 | tr '\t' ' ' | menu "$_prompt" "$_multi_flag" "$menu_extra_flags" | cut -d " " -f 1)
+    _preview_flags=""
+    if [ "$menu_program" = "fzf" ] && [ "${enable_preview:-1}" = 1 ] && [ "$_prompt" = "Select anime: " ]; then
+        _self_script="$0"
+        [ -f "$_self_script" ] || _self_script="sranime-cli"
+        _preview_flags="--preview \"$_self_script --preview {1}\" --preview-window=right:52%:wrap --bind=?:toggle-preview"
+    fi
+    _line=$(printf "%s" "$_stdin" | cut -f 1,3 | tr '\t' ' ' | menu "$_prompt" "$_multi_flag" "$menu_extra_flags $_preview_flags" | cut -d " " -f 1)
     _line_start=$(printf "%s" "$_line" | head -n 1)
     _line_end=$(printf "%s" "$_line" | tail -n 1)
     [ -n "$_line" ] || return 1
@@ -168,8 +174,9 @@ doctor_check() {
     _check_tool "grep" "required"
     _check_tool "patch" "optional"
 
-    printf "\nInteractive Frontends:\n"
+    printf "\nInteractive Frontends & Preview:\n"
     _check_tool "fzf" "optional"
+    _check_tool "chafa" "optional"
     _check_tool "rofi" "optional"
     _check_tool "dmenu" "optional"
 
@@ -311,6 +318,17 @@ hianime_search() {
         [ "$curl_exe" = "curl" ] && die "Blocked by cloudflare. Try installing curl-impersonate"
         die "Blocked by cloudflare."
     fi
+
+    # Parse and cache metadata for fzf preview pane
+    _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+    if [ -f "$_lib_dir/preview.sh" ]; then
+        . "$_lib_dir/preview.sh" 2>/dev/null || true
+        _preview_tsv="${SRANIME_CLI_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/sranime-cli}/search_cards.tsv"
+        _ensure_preview_dirs
+        : > "$_preview_tsv" 2>/dev/null || true
+        parse_search_cards "$_page" "$_preview_tsv" 2>/dev/null || true
+    fi
+
     # the top 10 sidebar repeats the result markup, cut it off before flattening the page
     printf "%s" "$_page" | sed '/id="main-sidebar"/,$d' | tr '\n' ' ' | sed 's|<div class="film-detail">|\n<div class="film-detail">|g' |
         sed -nE 's|.*<h3 class="film-name">[[:space:]]*<a href="[^"]*/([^"/]*)"[[:space:]]*title="([^"]*)".*|\1\t\2|p' |
@@ -585,6 +603,7 @@ mode="${SRANIME_CLI_MODE:-${mode:-sub}}"
 download_dir="${SRANIME_CLI_DOWNLOAD_DIR:-${download_dir:-.}}"
 log_episode="${SRANIME_CLI_LOG:-${log_episode:-1}}"
 quality="${SRANIME_CLI_QUALITY:-${quality:-best}}"
+enable_preview="${SRANIME_CLI_PREVIEW:-${enable_preview:-1}}"
 
 if command -v curl >/dev/null 2>&1; then
     curl_exe="curl"
@@ -789,6 +808,16 @@ while [ $# -gt 0 ]; do
             watchlog_clear
             exit 0
             ;;
+        --preview)
+            shift
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/preview.sh" ] && . "$_lib_dir/preview.sh" 2>/dev/null || true
+            preview_anime "$*"
+            exit 0
+            ;;
+        --no-preview)
+            enable_preview=0
+            ;;
         --doctor)
             doctor_check
             ;;
@@ -884,7 +913,14 @@ case "$source" in
             episode_maps="$(hianime_episodes "$anime_id")" || exit 1
         fi
         ep_list="$(printf '%s' "$episode_maps" | cut -f 2)"
-        [ -z "$ep_no" ] && ep_no=$(printf "%s" "$ep_list" | nth "Select episode: " "$menu_multi_flag")
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        [ -f "$_lib_dir/preview.sh" ] && . "$_lib_dir/preview.sh" 2>/dev/null || true
+        if command -v format_episodes_with_watched >/dev/null 2>&1; then
+            _ep_display=$(format_episodes_with_watched "$ep_list" "$anime_id")
+        else
+            _ep_display="$ep_list"
+        fi
+        [ -z "$ep_no" ] && ep_no=$(printf "%s" "$_ep_display" | nth "Select episode: " "$menu_multi_flag" | sed -e 's/[[:space:]]*✓[[:space:]]*\[Watched\]//g')
         [ -z "$ep_no" ] && die "Invalid episode selection"
         ;;
 esac

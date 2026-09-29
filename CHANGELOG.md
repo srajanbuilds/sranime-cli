@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic event hooks logging both playback sessions and downloaded episodes.
 - Comprehensive test suite for watchlog module (`test/test_watchlog.sh`).
 - Dynamic library path resolution (`SRANIME_LIB_DIR`).
+- Rich Terminal UI & Cover Art Previews (`lib/sranime-cli/preview.sh`).
+- Interactive side preview pane in `fzf` displaying anime English & Japanese titles, format, duration, Sub/Dub counts, watch history status, and English synopsis.
+- Optional terminal cover art thumbnail rendering via `chafa`.
+- Watched episode badges (`✓ [Watched]`) integrated into episode selection menu.
+- Toggle preview anytime with `?` or disable with `--no-preview` flag / `SRANIME_CLI_PREVIEW=0`.
+- Dedicated preview test suite (`test/test_preview.sh`) with 19 automated tests.
 
 ### Optimized
 - Accelerated MPV streaming with instant window rendering (`--force-window=immediate`), zero python yt-dlp delay on direct HLS links (`--ytdl=no`), and high-throughput HLS chunk buffer parameters (`--cache=yes --demuxer-max-bytes=100M --demuxer-readahead-secs=20`).
