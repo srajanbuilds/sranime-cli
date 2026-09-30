@@ -24,7 +24,7 @@ parse_search_cards() {
     mkdir -p "$(dirname "$_out_tsv")" 2>/dev/null || true
 
     # Flatten HTML for regex parsing
-    printf "%s\n\n" "$_html" | sed '/id="main-sidebar"/,$d' | tr '\n' ' ' | sed 's|<div class="flw-item"|\n<div class="flw-item"|g' | while IFS= read -r _item || [ -n "$_item" ]; do
+    printf "%s\n\n" "$_html" | sed '/id="main-sidebar"/,$d' | tr '\n' ' ' | sed 's|<div class="flw-item|\n<div class="flw-item|g' | while IFS= read -r _item || [ -n "$_item" ]; do
         [ -z "$_item" ] && continue
         printf "%s\n" "$_item" | grep -q 'class="film-detail"' 2>/dev/null || continue
 
@@ -67,8 +67,16 @@ preview_anime() {
     _line="$1"
     [ -z "$_line" ] && return 0
 
-    # Extract ID (first token or after tab)
-    _id=$(printf "%s" "$_line" | sed 's/^[[:space:]]*//; s/[[:space:]].*//')
+    # Extract ID (handles pure slug, tabbed "id \t title", or full "index \t id \t title")
+    if printf "%s" "$_line" | grep -q "	"; then
+        _col1=$(printf "%s" "$_line" | cut -f 1 | tr -d "[:space:]")
+        case "$_col1" in
+            ''|*[!0-9]*) _id="$_col1" ;;
+            *) _id=$(printf "%s" "$_line" | cut -f 2) ;;
+        esac
+    else
+        _id=$(printf "%s" "$_line" | sed 's/^[[:space:]]*//; s/[[:space:]].*//')
+    fi
     [ -z "$_id" ] && return 0
 
     _ensure_preview_dirs
@@ -98,8 +106,16 @@ preview_anime() {
     fi
 
     # Fallback title if not in cache
-    [ -z "$_title" ] && _title=$(printf "%s" "$_line" | cut -s -f 2-)
-    [ -z "$_title" ] && _title="$_id"
+    if [ -z "$_title" ]; then
+        if printf "%s" "$_line" | grep -q "	"; then
+            _col1=$(printf "%s" "$_line" | cut -f 1 | tr -d "[:space:]")
+            case "$_col1" in
+                ''|*[!0-9]*) _title=$(printf "%s" "$_line" | cut -s -f 2-) ;;
+                *) _title=$(printf "%s" "$_line" | cut -s -f 3-) ;;
+            esac
+        fi
+        [ -z "$_title" ] && _title=$(printf "%s" "$_id" | tr '-' ' ')
+    fi
 
     # Check user watch history for this anime
     _hist_file="${SRANIME_CLI_HIST_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sranime-cli}/sranime-hsts"

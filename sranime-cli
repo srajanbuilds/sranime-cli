@@ -39,13 +39,41 @@ nth() {
     [ "$_line_count" -eq 1 ] && printf "%s" "$_stdin" | cut -f 2,3 && return 0
     _prompt="$1"
     [ $# -ne 1 ] && _multi_flag="$2"
-    _preview_flags=""
+
     if [ "$menu_program" = "fzf" ] && [ "${enable_preview:-1}" = 1 ] && [ "$_prompt" = "Select anime: " ]; then
         _self_script="$0"
-        [ -f "$_self_script" ] || _self_script="sranime-cli"
-        _preview_flags="--preview \"$_self_script --preview {1}\" --preview-window=right:52%:wrap --bind=?:toggle-preview"
+        _preview_cmd=""
+        case "$(uname -s 2>/dev/null)" in
+            *MINGW* | *MSYS* | *CYGWIN*)
+                if command -v sranime-cli.cmd >/dev/null 2>&1; then
+                    _preview_cmd="sranime-cli.cmd --preview {2}"
+                elif [ -f "$(dirname "$_self_script")/sranime-cli.cmd" ]; then
+                    _preview_cmd="$(dirname "$_self_script")/sranime-cli.cmd --preview {2}"
+                else
+                    _preview_cmd="sranime-cli --preview {2}"
+                fi
+                ;;
+            *)
+                if [ -f "$_self_script" ]; then
+                    _preview_cmd="\"$_self_script\" --preview {2}"
+                else
+                    _preview_cmd="sranime-cli --preview {2}"
+                fi
+                ;;
+        esac
+
+        # shellcheck disable=SC2086
+        _selected=$(printf "%s\n" "$_stdin" | fzf --reverse --cycle --prompt "$_prompt" \
+            --delimiter='\t' --with-nth=1,3 \
+            --preview "$_preview_cmd" \
+            --preview-window=right:52%:wrap --bind=?:toggle-preview \
+            $_multi_flag $menu_extra_flags)
+        [ -z "$_selected" ] && return 1
+        printf "%s\n" "$_selected" | cut -f 2,3
+        return 0
     fi
-    _line=$(printf "%s" "$_stdin" | cut -f 1,3 | tr '\t' ' ' | menu "$_prompt" "$_multi_flag" "$menu_extra_flags $_preview_flags" | cut -d " " -f 1)
+
+    _line=$(printf "%s" "$_stdin" | cut -f 1,3 | tr '\t' ' ' | menu "$_prompt" "$_multi_flag" "$menu_extra_flags" | cut -d " " -f 1)
     _line_start=$(printf "%s" "$_line" | head -n 1)
     _line_end=$(printf "%s" "$_line" | tail -n 1)
     [ -n "$_line" ] || return 1
@@ -326,7 +354,7 @@ hianime_search() {
         _preview_tsv="${SRANIME_CLI_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/sranime-cli}/search_cards.tsv"
         _ensure_preview_dirs
         : > "$_preview_tsv" 2>/dev/null || true
-        parse_search_cards "$_page" "$_preview_tsv" 2>/dev/null || true
+        parse_search_cards "$_page" "$_preview_tsv" >/dev/null 2>&1 &
     fi
 
     # the top 10 sidebar repeats the result markup, cut it off before flattening the page

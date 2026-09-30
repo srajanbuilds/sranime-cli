@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Toggle preview anytime with `?` or disable with `--no-preview` flag / `SRANIME_CLI_PREVIEW=0`.
 - Dedicated preview test suite (`test/test_preview.sh`) with 19 automated tests.
 
+### Fixed
+- Fixed Windows fzf preview pane error (`'""11""' is not recognized`) by eliminating nested shell quotes and invoking Windows cmd shim directly with tab delimiters (`--delimiter=\t` and `--with-nth=1,3`).
+- Fixed preview metadata ID extraction to support full tabbed item rows as well as individual anime slugs.
+- Accelerated search responsiveness by running metadata card cache parsing asynchronously in the background.
+- Added repository-root `sranime-cli.cmd` launcher for seamless Windows PowerShell/CMD execution.
+
 ### Optimized
 - Accelerated MPV streaming with instant window rendering (`--force-window=immediate`), zero python yt-dlp delay on direct HLS links (`--ytdl=no`), and high-throughput HLS chunk buffer parameters (`--cache=yes --demuxer-max-bytes=100M --demuxer-readahead-secs=20`).
 - Prevented Windows console lockups by adding `--no-terminal` flag to background MPV process on Windows.
