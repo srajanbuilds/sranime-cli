@@ -35,6 +35,11 @@ assert_contains "show output includes DOWNLOAD" "$show_out" "DOWNLOAD"
 # Test 5: Filter show output
 frieren_out=$(watchlog_show "frieren")
 assert_contains "filter includes matching anime" "$frieren_out" "Frieren"
+assert_contains "filter shows match summary" "$frieren_out" "Showing 2 entries matching"
+
+# Test 5b: Date range filter
+range_out=$(watchlog_show "2020-01-01..2030-12-31")
+assert_contains "date range filter matches entries" "$range_out" "Frieren"
 
 # Test 6: Stats output
 stats_out=$(watchlog_stats)
@@ -42,6 +47,7 @@ assert_contains "stats shows 2 watched" "$stats_out" "Episodes Watched   : "
 assert_contains "stats shows 1 downloaded" "$stats_out" "Episodes Downloaded: "
 assert_contains "stats shows 2 unique series" "$stats_out" "Unique Series      : "
 assert_contains "stats shows estimated watch time" "$stats_out" "Est. Watch Time"
+assert_contains "stats shows viewing streaks" "$stats_out" "Viewing Streaks"
 
 # Test 7: Export CSV
 csv_out=$(watchlog_export csv)

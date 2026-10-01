@@ -1,12 +1,32 @@
 #!/bin/sh
-# sranime-cli watchlog module - lifetime watch history, statistics, and journal
+# sranime-cli watchlog module - lifetime watch history, statistics, streaks, and journal
 
 _watchlog_dir="${SRANIME_CLI_HIST_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sranime-cli}"
 _watchlog_file="${_watchlog_dir}/watch.log"
 
 _ensure_watchlog() {
-    [ ! -d "$_watchlog_dir" ] && mkdir -p "$_watchlog_dir"
-    [ ! -f "$_watchlog_file" ] && : >"$_watchlog_file"
+    [ ! -d "$_watchlog_dir" ] && mkdir -p "$_watchlog_dir" 2>/dev/null || true
+    [ ! -f "$_watchlog_file" ] && : >"$_watchlog_file" 2>/dev/null || true
+}
+
+# Convert YYYY-MM-DD to Julian Day Number in pure POSIX arithmetic (no external dependencies)
+_date_to_jdn() {
+    _d="$1"
+    _yr="${_d%%-*}"
+    _rest="${_d#*-}"
+    _mo="${_rest%%-*}"
+    _dy="${_rest#*-}"
+    # Strip leading zero for POSIX shell
+    _mo="${_mo#0}"
+    _dy="${_dy#0}"
+    [ -z "$_mo" ] && _mo=0
+    [ -z "$_dy" ] && _dy=0
+
+    _a=$(( (14 - _mo) / 12 ))
+    _y=$(( _yr + 4800 - _a ))
+    _m=$(( _mo + 12 * _a - 3 ))
+    _jdn=$(( _dy + (153 * _m + 2) / 5 + 365 * _y + _y / 4 - _y / 100 + _y / 400 - 32045 ))
+    printf "%d" "$_jdn"
 }
 
 # Append a watch or download event
@@ -21,7 +41,8 @@ watchlog_append() {
     _ts=$(date "+%Y-%m-%d %H:%M:%S" 2>/dev/null || date)
 
     [ -z "$_title" ] && return 0
-    printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$_ts" "$_action" "$_ep" "$_id" "$_title" "$_prov" >>"$_watchlog_file"
+    printf "%s	%s	%s	%s	%s	%s
+" "$_ts" "$_action" "$_ep" "$_id" "$_title" "$_prov" >>"$_watchlog_file"
 }
 
 # Display formatted watch history
@@ -38,13 +59,44 @@ watchlog_show() {
     printf "\033[1;36m%-19s  %-8s  %-5s  %-10s  %s\033[0m\n" "Date & Time" "Action" "Ep" "Provider" "Anime Title"
     printf "\033[0;90m%s\033[0m\n" "----------------------------------------------------------------------------------"
 
+    _shown=0
     while IFS='	' read -r _ts _action _ep _id _title _prov; do
         [ -z "$_title" ] && continue
         if [ -n "$_filter" ]; then
-            case "$(printf "%s" "$_title" | tr '[:upper:]' '[:lower:]')" in
-                *"$(printf "%s" "$_filter" | tr '[:upper:]' '[:lower:]')"*) ;;
-                *) continue ;;
+            _lower_filter=$(printf "%s" "$_filter" | tr '[:upper:]' '[:lower:]')
+            _lower_title=$(printf "%s" "$_title" | tr '[:upper:]' '[:lower:]')
+            _match=0
+
+            case "$_lower_title" in
+                *"$_lower_filter"*) _match=1 ;;
             esac
+            case "$_ts" in
+                *"$_filter"*) _match=1 ;;
+            esac
+            case "$_action" in
+                "$_filter") _match=1 ;;
+            esac
+            case "$_prov" in
+                "$_filter") _match=1 ;;
+            esac
+
+            # Date range matching: YYYY-MM-DD..YYYY-MM-DD
+            case "$_filter" in
+                *..*)
+                    _from="${_filter%%..*}"
+                    _to="${_filter##*..}"
+                    _date="${_ts%% *}"
+                    if [ -n "$_from" ] && [ "$_date" \< "$_from" ]; then
+                        _match=0
+                    elif [ -n "$_to" ] && [ "$_date" \> "$_to" ]; then
+                        _match=0
+                    else
+                        _match=1
+                    fi
+                    ;;
+            esac
+
+            [ "$_match" -eq 0 ] && continue
         fi
 
         _act_color="\033[1;32m"
@@ -52,7 +104,13 @@ watchlog_show() {
 
         printf "%-19s  ${_act_color}%-8s\033[0m  %-5s  \033[0;33m%-10s\033[0m  %s\n" \
             "$_ts" "$_action" "$_ep" "$_prov" "$_title"
+        _shown=$((_shown + 1))
     done <"$_watchlog_file"
+
+    if [ -n "$_filter" ]; then
+        printf "\033[0;90m----------------------------------------------------------------------------------\033[0m\n"
+        printf "  Showing %d entries matching: \033[1;33m%s\033[0m\n" "$_shown" "$_filter"
+    fi
 }
 
 # Compute and display viewing analytics and summary stats
@@ -63,11 +121,14 @@ watchlog_stats() {
         return 0
     fi
 
-    _total_watched=$(grep -c '	WATCH	' "$_watchlog_file" 2>/dev/null)
-    _total_downloaded=$(grep -c '	DOWNLOAD	' "$_watchlog_file" 2>/dev/null)
-    _unique_anime=$(cut -f 5 "$_watchlog_file" | sort -u | grep -c . 2>/dev/null)
+    _total_watched=$(grep -c '	WATCH	' "$_watchlog_file" 2>/dev/null || true)
+    _total_downloaded=$(grep -c '	DOWNLOAD	' "$_watchlog_file" 2>/dev/null || true)
+    _unique_anime=$(cut -f 5 "$_watchlog_file" | sort -u | grep -c . 2>/dev/null || true)
+    _total_watched="${_total_watched:-0}"
+    _total_downloaded="${_total_downloaded:-0}"
+    _unique_anime="${_unique_anime:-0}" 
 
-    # Estimated watch time (assuming 24 min per episode)
+    # Estimated watch time (assuming 24 min per episode standard)
     _total_mins=$(( ${_total_watched:-0} * 24 ))
     _hours=$(( _total_mins / 60 ))
     _mins=$(( _total_mins % 60 ))
@@ -75,6 +136,33 @@ watchlog_stats() {
 
     _first_date=$(head -n 1 "$_watchlog_file" | cut -f 1)
     _last_date=$(tail -n 1 "$_watchlog_file" | cut -f 1)
+
+    # Compute viewing streaks
+    _dates=$(cut -f 1 "$_watchlog_file" | cut -d ' ' -f 1 | sort -u)
+    _prev_j=0
+    _curr_streak=0
+    _max_streak=0
+    _last_j=0
+
+    for _d in $_dates; do
+        _j=$(_date_to_jdn "$_d")
+        if [ "$_prev_j" -eq 0 ]; then
+            _curr_streak=1
+        elif [ $((_j - _prev_j)) -eq 1 ]; then
+            _curr_streak=$((_curr_streak + 1))
+        else
+            _curr_streak=1
+        fi
+        [ "$_curr_streak" -gt "$_max_streak" ] && _max_streak="$_curr_streak"
+        _prev_j="$_j"
+        _last_j="$_j"
+    done
+
+    # Check if current streak is active (activity on today or yesterday)
+    _today_j=$(_date_to_jdn "$(date "+%Y-%m-%d" 2>/dev/null || echo "$_d")")
+    if [ $((_today_j - _last_j)) -gt 1 ]; then
+        _curr_streak=0
+    fi
 
     printf "\033[1;36m================ Lifetime Anime Statistics ================\033[0m\n"
     printf "  Episodes Watched   : \033[1;33m%s\033[0m\n" "${_total_watched:-0}"
@@ -85,6 +173,7 @@ watchlog_stats() {
     else
         printf "  Est. Watch Time    : \033[1;33m%d hrs, %d mins\033[0m (~24 min/ep)\n" "$_hours" "$_mins"
     fi
+    printf "  Viewing Streaks    : \033[1;32mCurrent: %d days\033[0m | \033[1;35mBest: %d days\033[0m\n" "$_curr_streak" "$_max_streak"
     printf "  First Logged View  : %s\n" "$_first_date"
     printf "  Latest Activity    : %s\n" "$_last_date"
     printf "\033[1;36m----------------- Most Watched Series ---------------------\033[0m\n"
