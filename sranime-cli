@@ -815,7 +815,12 @@ while [ $# -gt 0 ]; do
         -W | --watch-log)
             _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
             . "$_lib_dir/watchlog.sh" 2>/dev/null || true
-            watchlog_show "$2"
+            _log_filter=""
+            case "$2" in
+                -* | "") ;;
+                *) _log_filter="$2" ;;
+            esac
+            watchlog_show "$_log_filter"
             exit 0
             ;;
         --watch-stats)
@@ -827,7 +832,11 @@ while [ $# -gt 0 ]; do
         --watch-export)
             _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
             . "$_lib_dir/watchlog.sh" 2>/dev/null || true
-            watchlog_export "${2:-json}"
+            _export_fmt="json"
+            case "$2" in
+                csv | json) _export_fmt="$2" ;;
+            esac
+            watchlog_export "$_export_fmt"
             exit 0
             ;;
         --clear-watch-log)

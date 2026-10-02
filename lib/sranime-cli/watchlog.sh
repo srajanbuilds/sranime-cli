@@ -41,8 +41,7 @@ watchlog_append() {
     _ts=$(date "+%Y-%m-%d %H:%M:%S" 2>/dev/null || date)
 
     [ -z "$_title" ] && return 0
-    printf "%s	%s	%s	%s	%s	%s
-" "$_ts" "$_action" "$_ep" "$_id" "$_title" "$_prov" >>"$_watchlog_file"
+    printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$_ts" "$_action" "$_ep" "$_id" "$_title" "$_prov" >>"$_watchlog_file"
 }
 
 # Display formatted watch history
