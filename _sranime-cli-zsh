@@ -1,7 +1,7 @@
 #compdef sranime-cli
 
 _sranime_cli() {
-    local -a qualities
+    local -a qualities providers formats
     qualities=(
         'best:Highest available quality'
         'worst:Lowest available quality'
@@ -9,6 +9,15 @@ _sranime_cli() {
         '720p:720p HD'
         '480p:480p SD'
         '360p:360p Low'
+    )
+    providers=(
+        'hianime:HiAnime / Zoro extraction engine (primary default)'
+        'allanime:AllAnime GraphQL API engine (backup)'
+        'gogo:GogoAnime / Anitaku scraper (backup)'
+    )
+    formats=(
+        'json:Export structured JSON'
+        'csv:Export comma-separated values'
     )
 
     _arguments -s -S \
@@ -19,6 +28,8 @@ _sranime_cli() {
         '(-l --logview)'{-l,--logview}'[Show logs]' \
         '(-s --syncplay)'{-s,--syncplay}'[Use Syncplay to watch with friends]' \
         '(-S --select-nth)'{-S,--select-nth}'[Select nth entry]:index:' \
+        '(-p --provider)'{-p,--provider}'[Specify stream provider]:provider:(($providers))' \
+        '--list-providers[List available stream providers]' \
         '(-q --quality)'{-q,--quality}'[Specify the video quality]:quality:(($qualities))' \
         '(-v --vlc)'{-v,--vlc}'[Use VLC to play the video]' \
         '(-V --version)'{-V,--version}'[Show the version of the script]' \
@@ -33,7 +44,15 @@ _sranime_cli() {
         '(-N --nextep-countdown)'{-N,--nextep-countdown}'[Display a countdown to the next episode]' \
         '(-U --update)'{-U,--update}'[Update the script]' \
         '--edit-config[Open user configuration file in default editor]' \
+        '--validate-config[Validate configuration file syntax]' \
         '--dump-config[Print active configuration values and exit]' \
+        '--watchlist[Display the saved anime watchlist]' \
+        '--watchlist-clear[Clear the watchlist]' \
+        '(-W --watch-log)'{-W,--watch-log}'[Display lifetime watch log history]:filter:' \
+        '--watch-stats[Display viewing statistics and analytics]' \
+        '--watch-export[Export watch log to JSON or CSV]:format:(($formats))' \
+        '--clear-watch-log[Clear the lifetime watch log]' \
+        '--no-preview[Disable the rich terminal preview pane in fzf]' \
         '--doctor[Run system diagnostics and dependency check]' \
         '*:query:'
 }

@@ -155,14 +155,16 @@ help_info() {
         Clear the watchlist
       --list-providers
         List available stream providers
-      -W, --watch-log
-        Display lifetime watch log history
+      -W, --watch-log [filter]
+        Display lifetime watch log history (optional title or date range filter)
       --watch-stats
         Display viewing statistics and analytics
       --watch-export [json|csv]
         Export watch log to JSON or CSV (default: json)
       --clear-watch-log
         Clear the lifetime watch log
+      --no-preview
+        Disable the rich terminal preview pane in fzf
       --doctor
         Run system diagnostics and dependency check
     Some example usages:
