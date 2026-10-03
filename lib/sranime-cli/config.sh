@@ -17,7 +17,8 @@ validate_config() {
                 _key=$(printf '%s' "$_line" | cut -d= -f1 | tr -d '[:space:]')
                 case "$_key" in
                     player|mode|quality|download_dir|menu_program|skip_intro|log_episode|\
-                    player_extra_flags|menu_extra_flags|no_detach|exit_after_play)
+                    player_extra_flags|menu_extra_flags|no_detach|exit_after_play|\
+                    active_provider|enable_preview)
                         ;;
                     *)
                         printf "  \033[1;33mWarning:\033[0m Line %d: unknown key '%s'\n" "$_line_no" "$_key" >&2
@@ -56,11 +57,17 @@ quality="best"
 # Default download directory
 download_dir="$HOME/Downloads"
 
+# Preferred stream provider: hianime, allanime, gogo
+active_provider="hianime"
+
 # Preferred video player (e.g. mpv, vlc, iina)
 player="mpv"
 
 # Interactive menu program: fzf, rofi, dmenu
 menu_program="fzf"
+
+# Enable or disable rich terminal preview pane in fzf (1 or 0)
+enable_preview=1
 
 # Automatically skip intros with ani-skip (external tool, mpv only, 1 or 0)
 skip_intro=0

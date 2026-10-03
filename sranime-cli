@@ -80,7 +80,7 @@ nth() {
     if [ "$_line_start" = "$_line_end" ]; then
         printf "%s" "$_stdin" | grep -E '^'"${_line}"'($|[[:space:]])' | cut -f 2,3 || return 1
     else
-        printf "%s" "$_stdin" | sed -n '/^'"${_line_start}"'$/,/^'"${_line_end}$"'/p' || return 1
+        printf "%s" "$_stdin" | sed -nE '/^'"${_line_start}"'($|[[:space:]])/,/^'"${_line_end}"'($|[[:space:]])/p' || return 1
     fi
 }
 
@@ -634,6 +634,8 @@ download_dir="${SRANIME_CLI_DOWNLOAD_DIR:-${download_dir:-.}}"
 log_episode="${SRANIME_CLI_LOG:-${log_episode:-1}}"
 quality="${SRANIME_CLI_QUALITY:-${quality:-best}}"
 enable_preview="${SRANIME_CLI_PREVIEW:-${enable_preview:-1}}"
+ACTIVE_PROVIDER="${SRANIME_CLI_PROVIDER:-${active_provider:-${ACTIVE_PROVIDER:-hianime}}}"
+export ACTIVE_PROVIDER
 
 if command -v curl >/dev/null 2>&1; then
     curl_exe="curl"
@@ -769,9 +771,10 @@ while [ $# -gt 0 ]; do
             exit 0
             ;;
         --validate-config)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
             if [ -f "$config_file" ]; then
                 printf "Validating %s...\n" "$config_file"
-                if . lib/sranime-cli/config.sh 2>/dev/null && validate_config "$config_file"; then
+                if [ -f "$_lib_dir/config.sh" ] && . "$_lib_dir/config.sh" 2>/dev/null && validate_config "$config_file"; then
                     printf "\033[1;32mConfiguration is valid.\033[0m\n"
                 else
                     printf "\033[1;31mConfiguration has issues.\033[0m\n"
@@ -786,11 +789,13 @@ while [ $# -gt 0 ]; do
         --dump-config)
             printf "sranime-cli configuration:\n"
             printf "  config_file:      %s\n" "$config_file"
+            printf "  active_provider:  %s\n" "$ACTIVE_PROVIDER"
             printf "  mode:             %s\n" "$mode"
             printf "  quality:          %s\n" "$quality"
             printf "  download_dir:     %s\n" "$download_dir"
             printf "  player_function:  %s\n" "$player_function"
             printf "  menu_program:     %s\n" "$menu_program"
+            printf "  enable_preview:   %s\n" "$enable_preview"
             printf "  skip_intro:       %s\n" "$skip_intro"
             exit 0
             ;;

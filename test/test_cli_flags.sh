@@ -23,9 +23,11 @@ assert_contains "Help contains --watch-log flag" "$_help" "--watch-log"
 assert_contains "Help contains --watch-stats flag" "$_help" "--watch-stats"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
+assert_contains "Dump config shows active_provider" "$_config" "active_provider:"
 assert_contains "Dump config shows mode" "$_config" "mode:"
 assert_contains "Dump config shows quality" "$_config" "quality:"
 assert_contains "Dump config shows player" "$_config" "player_function:"
+assert_contains "Dump config shows enable_preview" "$_config" "enable_preview:"
 
 _hist=$($SRANIME_CLI --show-history 2>/dev/null)
 assert_contains "Show history produces output" "$_hist" "history"

@@ -52,6 +52,7 @@ parse_search_cards() {
         # Poster Image
         _poster=$(printf "%s" "$_item" | sed -nE 's|.*<img [^>]*src="([^"]+)"[^>]*class="film-poster-img".*|\1|p')
         [ -z "$_poster" ] && _poster=$(printf "%s" "$_item" | sed -nE 's|.*data-src="([^"]+)".*|\1|p')
+        case "$_poster" in //*) _poster="https:$_poster" ;; esac
 
         # Description / Synopsis
         _desc=$(printf "%s" "$_item" | sed -nE 's|.*<div class="description"[^>]*>[[:space:]]*([^<]*).*|\1|p' | sed -e "s|&#039;|'|g" -e 's|&quot;|"|g' -e "s|&amp;|\&|g" | tr -d '\r\n')
@@ -140,6 +141,7 @@ preview_anime() {
 
     # Render Cover Art if chafa is available and poster URL exists
     if [ -n "$_poster" ] && command -v chafa >/dev/null 2>&1; then
+        case "$_poster" in //*) _poster="https:$_poster" ;; esac
         _cover_file="${PREVIEW_COVERS_DIR}/${_id}.jpg"
         if [ ! -s "$_cover_file" ]; then
             curl -sL --max-time 3 -A "Mozilla/5.0" "$_poster" -o "$_cover_file" 2>/dev/null || true

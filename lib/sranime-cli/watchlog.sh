@@ -79,18 +79,21 @@ watchlog_show() {
                 "$_filter") _match=1 ;;
             esac
 
-            # Date range matching: YYYY-MM-DD..YYYY-MM-DD
+            # Date range matching: YYYY-MM-DD..YYYY-MM-DD (POSIX integer comparison)
             case "$_filter" in
                 *..*)
                     _from="${_filter%%..*}"
                     _to="${_filter##*..}"
                     _date="${_ts%% *}"
-                    if [ -n "$_from" ] && [ "$_date" \< "$_from" ]; then
+                    _d_int=$(printf "%s" "$_date" | tr -d '-')
+                    _from_int=$(printf "%s" "$_from" | tr -d '-')
+                    _to_int=$(printf "%s" "$_to" | tr -d '-')
+                    _match=1
+                    if [ -n "$_from_int" ] && [ "$_d_int" -lt "$_from_int" ] 2>/dev/null; then
                         _match=0
-                    elif [ -n "$_to" ] && [ "$_date" \> "$_to" ]; then
+                    fi
+                    if [ -n "$_to_int" ] && [ "$_d_int" -gt "$_to_int" ] 2>/dev/null; then
                         _match=0
-                    else
-                        _match=1
                     fi
                     ;;
             esac
