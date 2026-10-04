@@ -21,6 +21,9 @@ assert_contains "Help contains --doctor flag" "$_help" "--doctor"
 assert_contains "Help contains --edit-config flag" "$_help" "--edit-config"
 assert_contains "Help contains --watch-log flag" "$_help" "--watch-log"
 assert_contains "Help contains --watch-stats flag" "$_help" "--watch-stats"
+assert_contains "Help contains --login flag" "$_help" "--login"
+assert_contains "Help contains --scrobble-status flag" "$_help" "--scrobble-status"
+assert_contains "Help contains --logout flag" "$_help" "--logout"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"
@@ -50,6 +53,9 @@ _provs=$($SRANIME_CLI --list-providers 2>/dev/null)
 assert_contains "List providers outputs hianime" "$_provs" "hianime"
 assert_contains "List providers outputs allanime" "$_provs" "allanime"
 assert_contains "List providers outputs gogo" "$_provs" "gogo"
+
+_scrobble=$($SRANIME_CLI --scrobble-status 2>/dev/null)
+assert_contains "Scrobble status produces output" "$_scrobble" "AniList"
 
 $SRANIME_CLI --doctor >/dev/null 2>&1 || true
 

@@ -34,6 +34,9 @@ _sranime_cli() {
         '(-U --update)'{-U,--update}'[Update the script]' \
         '--edit-config[Open user configuration file in default editor]' \
         '--dump-config[Print active configuration values and exit]' \
+        '--login[Authenticate with AniList or MyAnimeList cloud trackers]:service:(anilist mal)' \
+        '--scrobble-status[Display status of linked anime tracking accounts]' \
+        '--logout[Log out from cloud tracking services]:service:(anilist mal)' \
         '--doctor[Run system diagnostics and dependency check]' \
         '*:query:'
 }
