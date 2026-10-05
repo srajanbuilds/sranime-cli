@@ -24,6 +24,7 @@ assert_contains "Help contains --watch-stats flag" "$_help" "--watch-stats"
 assert_contains "Help contains --login flag" "$_help" "--login"
 assert_contains "Help contains --scrobble-status flag" "$_help" "--scrobble-status"
 assert_contains "Help contains --logout flag" "$_help" "--logout"
+assert_contains "Help contains --no-scrobble flag" "$_help" "--no-scrobble"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"

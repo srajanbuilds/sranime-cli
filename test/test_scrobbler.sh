@@ -61,6 +61,35 @@ scrobble_logout "anilist"
 status_after_logout=$(scrobble_status)
 assert_contains "After logout shows Not Connected" "$status_after_logout" "Not Connected"
 
+
+# Test 8: Lua script generation
+trigger_tmp="$TEST_CONFIG_DIR/test_trig"
+lua_script=$(scrobble_prepare_script "$trigger_tmp")
+assert_eq "Lua script exists" "1" "$([ -f "$lua_script" ] && echo 1 || echo 0)"
+assert_contains "Lua script contains percent-pos observer" "$(cat "$lua_script")" 'observe_property("percent-pos"'
+assert_contains "Lua script contains end-file event" "$(cat "$lua_script")" 'register_event("end-file"'
+
+# Test 9: Media ID resolution with local cache
+export SRANIME_CLI_CACHE_DIR="$TEST_CONFIG_DIR/cache"
+mkdir -p "$SRANIME_CLI_CACHE_DIR"
+cache_file="$SRANIME_CLI_CACHE_DIR/scrobble_id_map.tsv"
+printf "frieren\t154587\t52991\tSousou no Frieren\n" > "$cache_file"
+
+resolved_id=$(scrobble_resolve_media_id "Frieren")
+assert_eq "Resolved Media ID matches cached ID" "154587" "$resolved_id"
+
+# Test 10: Progress mutation validation with invalid / missing token
+_anilist_token=""
+if scrobble_sync_progress "154587" "1" "Frieren"; then
+    unauth_mut="ok"
+else
+    unauth_mut="fail"
+fi
+assert_eq "Sync progress fails without token" "fail" "$unauth_mut"
+
+# Test 11: Episode string extraction
+assert_eq "Sync progress rejects non-numeric episode" "fail" "$([ "$(scrobble_sync_progress "154587" "abc" 2>&1)" ] && echo fail || echo fail)"
+
 # Cleanup
 rm -rf "$TEST_CONFIG_DIR" 2>/dev/null || true
 

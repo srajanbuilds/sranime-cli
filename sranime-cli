@@ -165,6 +165,8 @@ help_info() {
         Clear the lifetime watch log
       --no-preview
         Disable the rich terminal preview pane in fzf
+      --no-scrobble
+        Disable automatic AniList episode tracking for this session
       --login [anilist|mal]
         Authenticate with AniList or MyAnimeList cloud trackers
       --scrobble-status
@@ -558,11 +560,46 @@ play_episode() {
             case "$(uname -s 2>/dev/null)" in
                 *MINGW* | *MSYS* | *CYGWIN*) _mpv_flags="$_mpv_flags --no-terminal" ;;
             esac
+
+            _scrobble_hook=""
+            _scrobble_trig=""
+            _scrobble_lua=""
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            if [ "${auto_scrobble:-1}" = 1 ] && [ -f "$_lib_dir/scrobbler.sh" ]; then
+                . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
+                _scrobble_trig=$(make_temp 2>/dev/null || echo "/tmp/sranime_trig_$$")
+                _scrobble_lua=$(scrobble_prepare_script "$_scrobble_trig" 2>/dev/null || true)
+                [ -n "$_scrobble_lua" ] && [ -f "$_scrobble_lua" ] && _scrobble_hook="--script=$_scrobble_lua"
+            fi
+
             if [ "$no_detach" = 0 ]; then
-                nohup $player_function --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} $skip_flag $_mpv_flags $player_extra_flags --force-media-title="${anime_title} Episode ${ep_no}" "$video_link" >/dev/null 2>&1 &
+                nohup $player_function --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} $skip_flag $_mpv_flags $_scrobble_hook $player_extra_flags --force-media-title="${anime_title} Episode ${ep_no}" "$video_link" >/dev/null 2>&1 &
+                _player_pid=$!
+                if [ -n "$_scrobble_trig" ]; then
+                    (
+                        while kill -0 "$_player_pid" 2>/dev/null; do
+                            if [ -s "$_scrobble_trig" ]; then
+                                scrobble_episode "$anime_title" "$ep_no"
+                                rm -f "$_scrobble_trig" "$_scrobble_lua" 2>/dev/null || true
+                                exit 0
+                            fi
+                            sleep 3
+                        done
+                        if [ -s "$_scrobble_trig" ]; then
+                            scrobble_episode "$anime_title" "$ep_no"
+                        fi
+                        rm -f "$_scrobble_trig" "$_scrobble_lua" 2>/dev/null || true
+                    ) >/dev/null 2>&1 &
+                fi
             else
-                $player_function --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} $skip_flag $_mpv_flags $player_extra_flags --force-media-title="${anime_title} Episode ${ep_no}" "$video_link"
+                $player_function --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} $skip_flag $_mpv_flags $_scrobble_hook $player_extra_flags --force-media-title="${anime_title} Episode ${ep_no}" "$video_link"
                 mpv_exitcode=$?
+                if [ -n "$_scrobble_trig" ]; then
+                    if [ -s "$_scrobble_trig" ]; then
+                        scrobble_episode "$anime_title" "$ep_no"
+                    fi
+                    rm -f "$_scrobble_trig" "$_scrobble_lua" 2>/dev/null || true
+                fi
                 [ "$exit_after_play" = 1 ] && [ -z "$_range" ] && exit "$mpv_exitcode"
             fi
             ;;
@@ -642,6 +679,7 @@ download_dir="${SRANIME_CLI_DOWNLOAD_DIR:-${download_dir:-.}}"
 log_episode="${SRANIME_CLI_LOG:-${log_episode:-1}}"
 quality="${SRANIME_CLI_QUALITY:-${quality:-best}}"
 enable_preview="${SRANIME_CLI_PREVIEW:-${enable_preview:-1}}"
+auto_scrobble="${SRANIME_CLI_AUTO_SCROBBLE:-${auto_scrobble:-1}}"
 ACTIVE_PROVIDER="${SRANIME_CLI_PROVIDER:-${active_provider:-${ACTIVE_PROVIDER:-hianime}}}"
 export ACTIVE_PROVIDER
 
@@ -894,6 +932,12 @@ while [ $# -gt 0 ]; do
             ;;
         --no-preview)
             enable_preview=0
+            ;;
+        --no-scrobble)
+            auto_scrobble=0
+            ;;
+        --scrobble)
+            auto_scrobble=1
             ;;
         --doctor)
             doctor_check

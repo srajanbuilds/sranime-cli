@@ -18,7 +18,7 @@ validate_config() {
                 case "$_key" in
                     player|mode|quality|download_dir|menu_program|skip_intro|log_episode|\
                     player_extra_flags|menu_extra_flags|no_detach|exit_after_play|\
-                    active_provider|enable_preview)
+                    active_provider|enable_preview|auto_scrobble)
                         ;;
                     *)
                         printf "  \033[1;33mWarning:\033[0m Line %d: unknown key '%s'\n" "$_line_no" "$_key" >&2

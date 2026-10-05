@@ -211,3 +211,156 @@ scrobble_logout() {
             ;;
     esac
 }
+
+_scrobble_cache_dir="${SRANIME_CLI_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/sranime-cli}"
+_scrobble_cache_file="${_scrobble_cache_dir}/scrobble_id_map.tsv"
+
+_ensure_scrobble_cache() {
+    [ ! -d "$_scrobble_cache_dir" ] && mkdir -p "$_scrobble_cache_dir" 2>/dev/null || true
+    [ ! -f "$_scrobble_cache_file" ] && : >"$_scrobble_cache_file" 2>/dev/null || true
+}
+
+# Resolve Anime Title to AniList Media ID (with local TSV caching)
+# Usage: scrobble_resolve_media_id <anime_title>
+scrobble_resolve_media_id() {
+    _title="$1"
+    [ -z "$_title" ] && return 1
+
+    _ensure_scrobble_cache
+    _clean_title=$(printf '%s' "$_title" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]')
+
+    # 1. Check local cache
+    if [ -s "$_scrobble_cache_file" ]; then
+        _cached_id=$(grep "^${_clean_title}	" "$_scrobble_cache_file" 2>/dev/null | head -n 1 | cut -f 2 || true)
+        if [ -n "$_cached_id" ]; then
+            printf "%s" "$_cached_id"
+            return 0
+        fi
+    fi
+
+    # 2. Query AniList GraphQL Search API
+    _safe_title=$(printf '%s' "$_title" | sed 's/"/\\"/g')
+    _query=$(cat << GRAPHQLEOF
+{"query": "query (\$search: String) { Media(search: \$search, type: ANIME) { id idMal title { romaji english } episodes } }", "variables": {"search": "$_safe_title"}}
+GRAPHQLEOF
+)
+
+    _agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    _resp=$(curl -sL --max-time 6 -X POST         -H "Content-Type: application/json"         -H "Accept: application/json"         -H "User-Agent: $_agent"         -d "$_query"         "https://graphql.anilist.co" 2>/dev/null)
+
+    _media_id=""
+    _mal_id=""
+    _romaji=""
+
+    if command -v jq >/dev/null 2>&1; then
+        _media_id=$(printf '%s' "$_resp" | jq -r '.data.Media.id // empty' 2>/dev/null || true)
+        _mal_id=$(printf '%s' "$_resp" | jq -r '.data.Media.idMal // empty' 2>/dev/null || true)
+        _romaji=$(printf '%s' "$_resp" | jq -r '.data.Media.title.romaji // empty' 2>/dev/null || true)
+    else
+        _media_id=$(printf '%s' "$_resp" | sed -nE 's/.*"Media"[[:space:]]*:[[:space:]]*\{[[:space:]]*"id"[[:space:]]*:[[:space:]]*([0-9]+).*/\1/p')
+        _mal_id=$(printf '%s' "$_resp" | sed -nE 's/.*"idMal"[[:space:]]*:[[:space:]]*([0-9]+).*/\1/p')
+        _romaji=$(printf '%s' "$_resp" | sed -nE 's/.*"romaji"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p')
+    fi
+
+    if [ -n "$_media_id" ]; then
+        printf "%s	%s	%s	%s
+" "$_clean_title" "$_media_id" "${_mal_id:-0}" "${_romaji:-$_title}" >>"$_scrobble_cache_file"
+        printf "%s" "$_media_id"
+        return 0
+    fi
+
+    return 1
+}
+
+# Dispatch Progress Mutation to AniList
+# Usage: scrobble_sync_progress <media_id> <ep_no> [anime_title]
+scrobble_sync_progress() {
+    _mid="$1"
+    _ep="$2"
+    _title="${3:-Anime}"
+
+    [ -z "$_mid" ] || [ -z "$_ep" ] && return 1
+
+    # Extract integer episode number
+    _clean_ep=$(printf '%s' "$_ep" | grep -o '^[0-9]\+' || true)
+    [ -z "$_clean_ep" ] && return 1
+
+    _load_auth
+    [ -z "$_anilist_token" ] && return 1
+
+    _mutation=$(cat << MUTEOF
+{"query": "mutation (\$mediaId: Int, \$progress: Int) { SaveMediaListEntry(mediaId: \$mediaId, progress: \$progress, status: CURRENT) { id progress status } }", "variables": {"mediaId": $_mid, "progress": $_clean_ep}}
+MUTEOF
+)
+
+    _agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    _resp=$(curl -sL --max-time 8 -X POST         -H "Content-Type: application/json"         -H "Accept: application/json"         -H "Authorization: Bearer $_anilist_token"         -H "User-Agent: $_agent"         -d "$_mutation"         "https://graphql.anilist.co" 2>/dev/null)
+
+    if printf '%s' "$_resp" | grep -q '"status":"CURRENT"'; then
+        printf "\033[1;32m✓ [AniList]\033[0m Scrobbled Ep %s of %s\n" "$_clean_ep" "$_title"
+        if command -v notify_send >/dev/null 2>&1; then
+            notify_send "AniList Scrobble" "Updated ${_title} to Episode ${_clean_ep}"
+        fi
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Prepare Lua script for MPV IPC/progress observation
+# Usage: scrobble_prepare_script <trigger_file>
+scrobble_prepare_script() {
+    _trig="$1"
+    [ -z "$_trig" ] && return 1
+
+    _lua_file="${_trig}.lua"
+    _clean_trig=$(printf '%s' "$_trig" | tr '\\' '/')
+
+    cat << LUAEOF > "$_lua_file"
+-- sranime-cli MPV scrobble trigger
+local trigger_path = [=[$_clean_trig]=]
+local triggered = false
+
+local function trigger_scrobble()
+    if not triggered then
+        triggered = true
+        local f = io.open(trigger_path, "w")
+        if f then
+            f:write("SCROBBLED\n")
+            f:close()
+        end
+    end
+end
+
+mp.observe_property("percent-pos", "number", function(_, val)
+    if val and val >= 80 then
+        trigger_scrobble()
+    end
+end)
+
+mp.register_event("end-file", function(event)
+    if event and event.reason == "eof" then
+        trigger_scrobble()
+    end
+end)
+LUAEOF
+
+    printf "%s" "$_lua_file"
+}
+
+# High-level scrobble dispatcher called during/after playback
+# Usage: scrobble_episode <anime_title> <ep_no>
+scrobble_episode() {
+    _title="$1"
+    _ep="$2"
+
+    [ -z "$_title" ] || [ -z "$_ep" ] && return 1
+
+    _load_auth
+    [ -z "$_anilist_token" ] && return 0
+
+    _mid=$(scrobble_resolve_media_id "$_title")
+    if [ -n "$_mid" ]; then
+        scrobble_sync_progress "$_mid" "$_ep" "$_title"
+    fi
+}
