@@ -37,6 +37,9 @@ _sranime_cli() {
         '--login[Authenticate with AniList or MyAnimeList cloud trackers]:service:(anilist mal)' \
         '--scrobble-status[Display status of linked anime tracking accounts]' \
         '--logout[Log out from cloud tracking services]:service:(anilist mal)' \
+        '--sync[Open interactive menu with your AniList Currently Watching shows]' \
+        '--sync-list[Display your AniList Currently Watching watchlist and exit]' \
+        '--no-scrobble[Disable automatic episode tracking for this session]' \
         '--doctor[Run system diagnostics and dependency check]' \
         '*:query:'
 }

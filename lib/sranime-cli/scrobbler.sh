@@ -364,3 +364,67 @@ scrobble_episode() {
         scrobble_sync_progress "$_mid" "$_ep" "$_title"
     fi
 }
+
+# Fetch user's Currently Watching list from AniList
+# Emits TSV: search_title \t next_ep \t display_string
+scrobble_fetch_watchlist() {
+    _load_auth
+    if [ -z "$_anilist_token" ] || [ -z "$_anilist_uid" ]; then
+        printf "\033[1;33mNot authenticated with AniList.\033[0m\n" >&2
+        printf "Run: \033[1;36msranime-cli --login anilist\033[0m to link your account.\n" >&2
+        return 1
+    fi
+
+    _query=$(cat << GRAPHQLEOF
+{"query": "query (\$userId: Int) { MediaListCollection(userId: \$userId, type: ANIME, status: CURRENT) { lists { name entries { progress media { id idMal title { romaji english } episodes } } } } }", "variables": {"userId": $_anilist_uid}}
+GRAPHQLEOF
+)
+
+    _agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    _resp=$(curl -sL --max-time 8 -X POST         -H "Content-Type: application/json"         -H "Accept: application/json"         -H "Authorization: Bearer $_anilist_token"         -H "User-Agent: $_agent"         -d "$_query"         "https://graphql.anilist.co" 2>/dev/null)
+
+    [ -z "$_resp" ] && return 1
+
+    if command -v jq >/dev/null 2>&1; then
+        printf '%s' "$_resp" | jq -r '
+            .data.MediaListCollection.lists[].entries[] |
+            (if (.media.title.english != null and .media.title.english != "") then .media.title.english else .media.title.romaji end) as $title |
+            .progress as $prog |
+            (if .media.episodes != null then (.media.episodes | tostring) else "?" end) as $total |
+            ($prog + 1) as $next |
+            "\($title)	\($next)	\($title)  [Ep \($prog)/\($total)]  (Next: Ep \($next))"
+        ' 2>/dev/null
+    else
+        printf '%s\n' "$_resp" | sed 's/{"progress"/\n{"progress"/g' | while IFS= read -r _entry; do
+            [ -z "$_entry" ] && continue
+            _prog=$(printf '%s' "$_entry" | sed -nE 's/.*"progress"[[:space:]]*:[[:space:]]*([0-9]+).*/\1/p')
+            [ -z "$_prog" ] && continue
+            _eng=$(printf '%s' "$_entry" | sed -nE 's/.*"english"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')
+            _rom=$(printf '%s' "$_entry" | sed -nE 's/.*"romaji"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')
+            _eps=$(printf '%s' "$_entry" | sed -nE 's/.*"episodes"[[:space:]]*:[[:space:]]*([0-9]+).*/\1/p')
+            [ -z "$_eps" ] && _eps="?"
+            _title="${_eng:-$_rom}"
+            [ -z "$_title" ] && continue
+            _next=$((_prog + 1))
+            printf "%s\t%s\t%s  [Ep %s/%s]  (Next: Ep %s)\n" "$_title" "$_next" "$_title" "$_prog" "$_eps" "$_next"
+        done
+    fi
+}
+
+# Display watchlist directly to terminal
+scrobble_show_watchlist() {
+    _list=$(scrobble_fetch_watchlist) || return 1
+    if [ -z "$_list" ]; then
+        printf "\033[1;34mYour AniList 'Currently Watching' list is empty.\033[0m\n"
+        return 0
+    fi
+
+    printf "\033[1;36m================ AniList Currently Watching ================\033[0m\n"
+    _idx=1
+    printf "%s\n" "$_list" | while IFS='	' read -r _title _next _disp; do
+        [ -z "$_title" ] && continue
+        printf "  \033[1;33m%2d.\033[0m %s\n" "$_idx" "$_disp"
+        _idx=$((_idx + 1))
+    done
+    printf "\033[1;36m============================================================\033[0m\n"
+}

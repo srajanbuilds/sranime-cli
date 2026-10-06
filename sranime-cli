@@ -165,6 +165,10 @@ help_info() {
         Clear the lifetime watch log
       --no-preview
         Disable the rich terminal preview pane in fzf
+      --sync
+        Open interactive menu with your AniList Currently Watching shows
+      --sync-list
+        Display your AniList Currently Watching watchlist and exit
       --no-scrobble
         Disable automatic AniList episode tracking for this session
       --login [anilist|mal]
@@ -939,6 +943,17 @@ while [ $# -gt 0 ]; do
         --scrobble)
             auto_scrobble=1
             ;;
+        --sync)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/scrobbler.sh" ] && . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
+            source=sync
+            ;;
+        --sync-list)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/scrobbler.sh" ] && . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
+            scrobble_show_watchlist
+            exit 0
+            ;;
         --doctor)
             doctor_check
             ;;
@@ -977,6 +992,52 @@ trap 'cleanup; exit 1' INT HUP TERM
 
 # searching
 case "$source" in
+    sync)
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        [ -f "$_lib_dir/scrobbler.sh" ] && . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
+        _sync_list=$(scrobble_fetch_watchlist) || die "Failed to fetch AniList watchlist"
+        [ -z "$_sync_list" ] && die "Your AniList 'Currently Watching' list is empty!"
+        _selected=$(printf "%s\n" "$_sync_list" | menu "Select from AniList: " "" "--delimiter='\t' --with-nth=3")
+        [ -z "$_selected" ] && exit 0
+        query=$(printf "%s" "$_selected" | cut -f 1)
+        next_ep=$(printf "%s" "$_selected" | cut -f 2)
+        [ -z "$ep_no" ] && ep_no="$next_ep"
+        query=$(printf "%s" "$query" | sed 's| |+|g')
+
+        if [ "${ACTIVE_PROVIDER:-hianime}" = "hianime" ] && [ -z "$SRANIME_CLI_PROVIDER_FORCE" ]; then
+            anime_list=$(hianime_search "$query")
+            if [ -z "$anime_list" ] && command -v provider_search >/dev/null 2>&1; then
+                anime_list=$(provider_search "$query")
+            fi
+        elif command -v provider_search >/dev/null 2>&1; then
+            anime_list=$(provider_search "$query") || die "No results found across available providers!"
+        else
+            anime_list=$(hianime_search "$query") || exit 1
+        fi
+        [ -z "$anime_list" ] && die "No results found on provider for: $query"
+        result=$(printf "%s" "$anime_list" | head -n 1)
+        anime_title="$(printf "%s" "$result" | cut -f 2)"
+        anime_id="$(printf "%s" "$result" | cut -f 1)"
+        if [ "${ACTIVE_PROVIDER:-hianime}" = "hianime" ]; then
+            episode_maps="$(hianime_episodes "$anime_id")" || exit 1
+        elif command -v provider_episodes >/dev/null 2>&1; then
+            episode_maps="$(provider_episodes "$anime_id")" || exit 1
+        else
+            episode_maps="$(hianime_episodes "$anime_id")" || exit 1
+        fi
+        ep_list="$(printf '%s' "$episode_maps" | cut -f 2)"
+        if ! printf "%s\n" "$ep_list" | grep -q "^${ep_no}$"; then
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/preview.sh" ] && . "$_lib_dir/preview.sh" 2>/dev/null || true
+            if command -v format_episodes_with_watched >/dev/null 2>&1; then
+                _ep_display=$(format_episodes_with_watched "$ep_list" "$anime_id")
+            else
+                _ep_display="$ep_list"
+            fi
+            ep_no=$(printf "%s" "$_ep_display" | nth "Select episode: " "$menu_multi_flag" | sed -e 's/[[:space:]]*✓[[:space:]]*\[Watched\]//g')
+            [ -z "$ep_no" ] && die "Invalid episode selection"
+        fi
+        ;;
     history)
         backup_old_hist
         anime_list=$(while read -r ep_no anime_id anime_title; do process_hist_entry & done <"$histfile")

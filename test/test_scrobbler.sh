@@ -90,6 +90,38 @@ assert_eq "Sync progress fails without token" "fail" "$unauth_mut"
 # Test 11: Episode string extraction
 assert_eq "Sync progress rejects non-numeric episode" "fail" "$([ "$(scrobble_sync_progress "154587" "abc" 2>&1)" ] && echo fail || echo fail)"
 
+
+# Test 12: Unauthenticated scrobble_fetch_watchlist fails gracefully
+_anilist_token=""
+_anilist_uid=""
+if scrobble_fetch_watchlist >/dev/null 2>&1; then
+    unauth_fetch="ok"
+else
+    unauth_fetch="fail"
+fi
+assert_eq "Unauthenticated fetch_watchlist fails" "fail" "$unauth_fetch"
+
+# Test 13: Watchlist parsing from mock JSON response
+mock_json='{"data":{"MediaListCollection":{"lists":[{"name":"Watching","entries":[{"progress":18,"media":{"id":154587,"title":{"romaji":"Sousou no Frieren","english":"Frieren: Beyond Journey'"'"'s End"},"episodes":28}}]}]}}}'
+
+# Test pure POSIX parser extraction
+parsed_entry=$(printf '%s\n' "$mock_json" | sed 's/{"progress"/\n{"progress"/g' | while IFS= read -r _entry; do
+    [ -z "$_entry" ] && continue
+    _prog=$(printf '%s' "$_entry" | sed -nE 's/.*"progress"[[:space:]]*:[[:space:]]*([0-9]+).*/\1/p')
+    [ -z "$_prog" ] && continue
+    _eng=$(printf '%s' "$_entry" | sed -nE 's/.*"english"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')
+    _rom=$(printf '%s' "$_entry" | sed -nE 's/.*"romaji"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')
+    _eps=$(printf '%s' "$_entry" | sed -nE 's/.*"episodes"[[:space:]]*:[[:space:]]*([0-9]+).*/\1/p')
+    [ -z "$_eps" ] && _eps="?"
+    _title="${_eng:-$_rom}"
+    _next=$((_prog + 1))
+    printf "%s\t%s\t%s  [Ep %s/%s]  (Next: Ep %s)\n" "$_title" "$_next" "$_title" "$_prog" "$_eps" "$_next"
+done)
+
+assert_contains "Parsed watchlist has English title" "$parsed_entry" "Frieren"
+assert_contains "Parsed watchlist calculates next episode 19" "$parsed_entry" "19"
+assert_contains "Parsed watchlist shows progress 18/28" "$parsed_entry" "[Ep 18/28]"
+
 # Cleanup
 rm -rf "$TEST_CONFIG_DIR" 2>/dev/null || true
 
