@@ -41,12 +41,13 @@ fi
 
 echo "All smoke tests passed successfully!"
 
-echo "[7/8] Running test suites (CLI flags, providers, watchlog, preview, scrobbler)..."
+echo "[7/8] Running test suites (CLI flags, providers, watchlog, preview, scrobbler, download)..."
 sh test/test_cli_flags.sh
 sh test/test_providers.sh
 sh test/test_watchlog.sh
 sh test/test_preview.sh
 sh test/test_scrobbler.sh
+sh test/test_download.sh
 
 echo "[8/8] Checking for stale ani-cli references..."
 if grep -rn "ani-cli" sranime-cli lib/ test/ install.sh Makefile 2>/dev/null | grep -v "ani-skip" | grep -v "backfill" | grep -v "smoke_test.sh"; then

@@ -229,6 +229,7 @@ doctor_check() {
     _check_tool "syncplay" "optional"
 
     printf "\nDownloaders & Integrations:\n"
+    _check_tool "aria2c" "optional"
     _check_tool "yt-dlp" "optional"
     _check_tool "ffmpeg" "optional"
     _check_tool "ani-skip" "optional"
@@ -524,14 +525,21 @@ update_history() {
 # shellcheck disable=SC2086
 # $1 = video link, $2 = video name, $3 = extra flags
 download() {
-    [ -n "$sub_link" ] && $curl_exe -sL -A "$agent" -e "$refr" --max-time 10 $cipher_flag "$sub_link" -o "$download_dir/$2.vtt"
-    if command -v "yt-dlp" >/dev/null && yt-dlp --referer "$refr" "$1" --no-skip-unavailable-fragments --fragment-retries infinite -N 16 -o "$download_dir/$2.mp4" $3; then
-        command -v notify_download_complete >/dev/null 2>&1 && notify_download_complete "$anime_title" "$ep_no" "$download_dir"
-        return 0
-    fi
-    if ffmpeg -extension_picky 0 -referer "$refr" -loglevel error -stats -i "$1" -c copy "$download_dir/$2.mp4" $3; then
-        command -v notify_download_complete >/dev/null 2>&1 && notify_download_complete "$anime_title" "$ep_no" "$download_dir"
-        return 0
+    _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+    if [ -f "$_lib_dir/download.sh" ]; then
+        . "$_lib_dir/download.sh" 2>/dev/null
+        download_stream "$1" "$2" "$download_dir" "$sub_link" "$3"
+    else
+        # Fallback legacy implementation
+        [ -n "$sub_link" ] && $curl_exe -sL -A "$agent" -e "$refr" --max-time 10 $cipher_flag "$sub_link" -o "$download_dir/$2.vtt"
+        if command -v "yt-dlp" >/dev/null && yt-dlp --referer "$refr" "$1" --no-skip-unavailable-fragments --fragment-retries infinite -N 16 -o "$download_dir/$2.mp4" $3; then
+            command -v notify_download_complete >/dev/null 2>&1 && notify_download_complete "$anime_title" "$ep_no" "$download_dir"
+            return 0
+        fi
+        if ffmpeg -extension_picky 0 -referer "$refr" -loglevel error -stats -i "$1" -c copy "$download_dir/$2.mp4" $3; then
+            command -v notify_download_complete >/dev/null 2>&1 && notify_download_complete "$anime_title" "$ep_no" "$download_dir"
+            return 0
+        fi
     fi
 }
 
@@ -779,6 +787,11 @@ while [ $# -gt 0 ]; do
             ;;
         -d | --download)
             player_function=download
+            ;;
+        --download-dir)
+            [ $# -lt 2 ] && die "missing argument for --download-dir!"
+            download_dir="$2"
+            shift
             ;;
         -D | --delete | --clear-history)
             : >"$histfile"
