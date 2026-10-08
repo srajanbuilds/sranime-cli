@@ -4,7 +4,7 @@ version_number="5.3.0"
 
 # Module directory resolution
 _bin_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)"
-for _cand in "$_bin_dir/lib/sranime-cli" "/usr/local/lib/sranime-cli" "/usr/lib/sranime-cli" "/usr/share/sranime-cli"; do
+for _cand in "$_bin_dir/lib/sranime-cli" "/usr/local/lib/sranime-cli" "/usr/lib/sranime-cli" "/usr/share/sranime-cli" "$HOME/.local/lib/sranime-cli"; do
     if [ -d "$_cand" ]; then
         SRANIME_LIB_DIR="$_cand"
         break
@@ -163,6 +163,14 @@ help_info() {
         Export watch log to JSON or CSV (default: json)
       --clear-watch-log
         Clear the lifetime watch log
+      --download-dir [path]
+        Specify directory for downloaded anime files
+      --room [name]
+        Set Syncplay room name and launch watch party (default: WatchParty)
+      --discord
+        Enable Discord Rich Presence (default: enabled)
+      --no-discord
+        Disable Discord Rich Presence
       --no-preview
         Disable the rich terminal preview pane in fzf
       --sync
@@ -587,6 +595,10 @@ play_episode() {
             if [ "$no_detach" = 0 ]; then
                 nohup $player_function --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} $skip_flag $_mpv_flags $_scrobble_hook $player_extra_flags --force-media-title="${anime_title} Episode ${ep_no}" "$video_link" >/dev/null 2>&1 &
                 _player_pid=$!
+                if [ "${enable_discord_rpc:-1}" = 1 ] && [ -f "$_lib_dir/discord.sh" ]; then
+                    . "$_lib_dir/discord.sh" 2>/dev/null || true
+                    discord_start_presence "$anime_title" "$ep_no" "$mode" "$_player_pid"
+                fi
                 if [ -n "$_scrobble_trig" ]; then
                     (
                         while kill -0 "$_player_pid" 2>/dev/null; do
@@ -626,7 +638,7 @@ play_episode() {
             fi
             ;;
         *vlc*) nohup $player_function --http-referrer="$refr" $player_extra_flags --play-and-exit --meta-title="${anime_title} Episode ${ep_no}" "$video_link" ${sub_link:+:input-slave="$sub_link"} >/dev/null 2>&1 & ;;
-        *yncpla*) nohup $player_function $player_extra_flags "$video_link" -- $skip_flag --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} --force-media-title="${anime_title} Episode ${ep_no}" >/dev/null 2>&1 & ;;
+        *yncpla*) nohup $player_function ${syncplay_room:+--room "$syncplay_room"} $player_extra_flags "$video_link" -- $skip_flag --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} --force-media-title="${anime_title} Episode ${ep_no}" >/dev/null 2>&1 & ;;
         download) "$player_function" "$video_link" "${anime_title} Episode ${ep_no}" $player_extra_flags ;;
         catt) nohup catt cast $player_extra_flags "$video_link" >/dev/null 2>&1 & ;;
         iSH)
@@ -719,6 +731,8 @@ log_episode="${SRANIME_CLI_LOG:-${log_episode:-1}}"
 quality="${SRANIME_CLI_QUALITY:-${quality:-best}}"
 enable_preview="${SRANIME_CLI_PREVIEW:-${enable_preview:-1}}"
 auto_scrobble="${SRANIME_CLI_AUTO_SCROBBLE:-${auto_scrobble:-1}}"
+enable_discord_rpc="${SRANIME_CLI_DISCORD:-${enable_discord_rpc:-1}}"
+syncplay_room="${SRANIME_SYNCPLAY_ROOM:-WatchParty}"
 ACTIVE_PROVIDER="${SRANIME_CLI_PROVIDER:-${active_provider:-${ACTIVE_PROVIDER:-hianime}}}"
 export ACTIVE_PROVIDER
 
@@ -979,6 +993,25 @@ while [ $# -gt 0 ]; do
             ;;
         --no-scrobble)
             auto_scrobble=0
+            ;;
+        --discord)
+            enable_discord_rpc=1
+            ;;
+        --no-discord)
+            enable_discord_rpc=0
+            ;;
+        --room)
+            [ $# -lt 2 ] && die "missing argument for --room!"
+            syncplay_room="$2"
+            case "$(uname -s 2>/dev/null)" in
+                Darwin*) player_function="/Applications/Syncplay.app/Contents/MacOS/syncplay" ;;
+                MINGW* | *Msys | *MSYS* | *CYGWIN*)
+                    export PATH="$PATH":"/c/Program Files (x86)/Syncplay/"
+                    player_function="syncplay.exe"
+                    ;;
+                *) player_function="syncplay" ;;
+            esac
+            shift
             ;;
         --scrobble)
             auto_scrobble=1

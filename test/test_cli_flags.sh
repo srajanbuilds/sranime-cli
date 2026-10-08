@@ -27,6 +27,10 @@ assert_contains "Help contains --logout flag" "$_help" "--logout"
 assert_contains "Help contains --sync flag" "$_help" "--sync"
 assert_contains "Help contains --sync-list flag" "$_help" "--sync-list"
 assert_contains "Help contains --no-scrobble flag" "$_help" "--no-scrobble"
+assert_contains "Help contains --discord flag" "$_help" "--discord"
+assert_contains "Help contains --no-discord flag" "$_help" "--no-discord"
+assert_contains "Help contains --room flag" "$_help" "--room"
+assert_contains "Help contains --download-dir flag" "$_help" "--download-dir"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"
