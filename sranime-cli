@@ -642,6 +642,33 @@ play_episode() {
 }
 
 play() {
+    _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+    _max_eps=$(printf "%s\n" "$ep_list" | wc -l | tr -d "[:space:]")
+    _parsed_range=""
+
+    # Check for range expressions (hyphen, comma, space, or "all")
+    case "$ep_no" in
+        *-* | *,* | *" "* | all)
+            if [ -f "$_lib_dir/download.sh" ]; then
+                . "$_lib_dir/download.sh" 2>/dev/null || true
+                _parsed_range=$(parse_episode_range "$ep_no" "$_max_eps" 2>/dev/null || true)
+            fi
+            ;;
+    esac
+
+    if [ -n "$_parsed_range" ]; then
+        _range="$_parsed_range"
+        [ "$player_function" = "download" ] && command -v download_batch_summary >/dev/null 2>&1 && download_batch_summary "$_range"
+        for i in $_range; do
+            tput clear 2>/dev/null || true
+            ep_no=$i
+            info "Processing episode $ep_no of $anime_title..."
+            play_episode
+        done
+        [ "$player_function" = "download" ] && command -v notify_send >/dev/null 2>&1 && notify_send "Batch Download Complete" "Downloaded episodes of ${anime_title}"
+        return 0
+    fi
+
     _start=$(printf "%s" "$ep_no" | grep -Eo '^(-1|[0-9]+(\.[0-9]+)?)')
     _end=$(printf "%s" "$ep_no" | grep -Eo '(-1|[0-9]+(\.[0-9]+)?)$')
     [ "$_start" = "-1" ] && ep_no=$(printf "%s" "$ep_list" | tail -n 1) && unset _start

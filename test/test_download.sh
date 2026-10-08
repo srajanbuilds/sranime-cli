@@ -49,6 +49,35 @@ test_out_dir="$(mktemp -d 2>/dev/null || mktemp -d -t 'sranime_dl_test')/subdir"
 download_stream "invalid://protocol" "Test" "$test_out_dir" >/dev/null 2>&1 || true
 assert_eq "Output directory created automatically" "1" "$([ -d "$test_out_dir" ] && echo 1 || echo 0)"
 
+
+# Test 6: parse_episode_range with standard ranges
+r_hyphen=$(parse_episode_range "1-5" 10 | tr '\n' ' ')
+assert_eq "parse_episode_range handles hyphens" "1 2 3 4 5 " "$r_hyphen"
+
+# Test 7: parse_episode_range with commas and mixed ranges
+r_mixed=$(parse_episode_range "1,3,5-7,10" 12 | tr '\n' ' ')
+assert_eq "parse_episode_range handles mixed commas and hyphens" "1 3 5 6 7 10 " "$r_mixed"
+
+# Test 8: parse_episode_range with 'all'
+r_all=$(parse_episode_range "all" 4 | tr '\n' ' ')
+assert_eq "parse_episode_range handles all keyword" "1 2 3 4 " "$r_all"
+
+# Test 9: format_season_path generates Plex-compliant paths
+p_season=$(format_season_path "/downloads" "Frieren: Beyond Journey's End" 4 1 1080p)
+assert_contains "format_season_path includes sanitized anime title" "$p_season" "Frieren - Beyond Journey's End"
+assert_contains "format_season_path includes Season 01" "$p_season" "Season 01"
+assert_contains "format_season_path includes S01E04" "$p_season" "S01E04"
+assert_contains "format_season_path includes quality tag" "$p_season" "[1080p]"
+
+# Test 10: download_batch_summary formats queue
+sum_out=$(download_batch_summary "1
+2
+3")
+assert_contains "download_batch_summary includes Total Episodes" "$sum_out" "Total Episodes"
+assert_contains "download_batch_summary includes count" "$sum_out" "3"
+assert_contains "download_batch_summary includes Queue List" "$sum_out" "Queue List"
+assert_contains "download_batch_summary includes items" "$sum_out" "1 2 3"
+
 # Cleanup
 rm -rf "${test_out_dir%/*}" 2>/dev/null || true
 

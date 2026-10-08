@@ -165,3 +165,73 @@ download_stream() {
         return 1
     fi
 }
+
+# Parse episode ranges into sorted, unique episode list
+# Supports: "1-12", "1,3,5-8", "all", "1 2 3"
+# Usage: parse_episode_range <range_str> [max_episodes]
+parse_episode_range() {
+    _range="$1"
+    _max="${2:-1000}"
+    [ -z "$_range" ] && return 1
+
+    printf '%s\n' "$_range" | tr ',' ' ' | tr -s ' ' '\n' | while read -r _part; do
+        [ -z "$_part" ] && continue
+        case "$_part" in
+            all)
+                _i=1
+                while [ "$_i" -le "$_max" ]; do
+                    printf "%d\n" "$_i"
+                    _i=$((_i + 1))
+                done
+                ;;
+            *-*)
+                _start="${_part%%-*}"
+                _end="${_part##*-}"
+                case "$_start" in ''|*[!0-9]*) continue ;; esac
+                case "$_end" in ''|*[!0-9]*) continue ;; esac
+                if [ "$_start" -le "$_end" ]; then
+                    _i="$_start"
+                    while [ "$_i" -le "$_end" ]; do
+                        printf "%d\n" "$_i"
+                        _i=$((_i + 1))
+                    done
+                fi
+                ;;
+            *)
+                case "$_part" in
+                    ''|*[!0-9]*) continue ;;
+                    *) printf "%d\n" "$_part" ;;
+                esac
+                ;;
+        esac
+    done | sort -nu
+}
+
+# Format standardized Plex/Jellyfin file path
+# Usage: format_season_path <download_base> <anime_title> <ep_no> [season_no] [quality]
+format_season_path() {
+    _base="${1:-.}"
+    _title="$2"
+    _ep="$3"
+    _season="${4:-1}"
+    _qual="${5:-1080p}"
+
+    _safe_title=$(sanitize_filename "$_title")
+    _s_pad=$(printf "%02d" "$_season" 2>/dev/null || printf "%s" "$_season")
+    _e_pad=$(printf "%02d" "$_ep" 2>/dev/null || printf "%s" "$_ep")
+
+    printf "%s/%s/Season %s/%s - S%sE%s [%s].mp4" \
+        "$_base" "$_safe_title" "$_s_pad" "$_safe_title" "$_s_pad" "$_e_pad" "$_qual"
+}
+
+# Format display summary for batch download queue
+# Usage: download_batch_summary <ep_list>
+download_batch_summary() {
+    _list="$1"
+    _count=$(printf '%s\n' "$_list" | wc -l | tr -d '[:space:]')
+    printf "\033[1;36m================ Batch Download Queue ================\033[0m\n"
+    printf "  Total Episodes : \033[1;33m%s\033[0m\n" "$_count"
+    printf "  Queue List     : \033[1;32m%s\033[0m\n" "$(printf '%s ' $_list)"
+    printf "  Concurrency    : \033[1;35m%s worker(s)\033[0m\n" "${SRANIME_DOWNLOAD_CONCURRENCY:-2}"
+    printf "\033[1;36m======================================================\033[0m\n"
+}
