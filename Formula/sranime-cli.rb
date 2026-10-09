@@ -6,16 +6,21 @@ class SranimeCli < Formula
   license "GPL-3.0"
   head "https://github.com/srajanbuilds/sranime-cli.git", branch: "main"
 
+  depends_on "curl"
   depends_on "ffmpeg"
   depends_on "fzf"
   depends_on "grep"
   depends_on "yt-dlp"
+  depends_on "aria2" => :optional
   depends_on "mpv" => :recommended
 
   def install
     bin.install "sranime-cli"
     man1.install "sranime-cli.1"
-    lib.install Dir["lib/sranime-cli"]
+    (lib/"sranime-cli").install Dir["lib/sranime-cli/*"]
+    bash_completion.install "_sranime-cli-bash" => "sranime-cli"
+    zsh_completion.install "_sranime-cli-zsh" => "_sranime-cli"
+    fish_completion.install "completions/sranime-cli.fish" => "sranime-cli.fish"
   end
 
   def caveats

@@ -16,11 +16,13 @@ warn() { printf "${YELLOW}Warning:${RESET} %s\n" "$*"; }
 
 if [ "$(id -u)" -eq 0 ]; then
     BINDIR="/usr/local/bin"
+    LIBDIR="/usr/local/lib/sranime-cli"
     MANDIR="/usr/local/share/man/man1"
     BASHDIR="/usr/local/share/bash-completion/completions"
     ZSHDIR="/usr/local/share/zsh/site-functions"
 else
     BINDIR="${HOME}/.local/bin"
+    LIBDIR="${HOME}/.local/lib/sranime-cli"
     MANDIR="${HOME}/.local/share/man/man1"
     BASHDIR="${HOME}/.local/share/bash-completion/completions"
     ZSHDIR="${HOME}/.local/share/zsh/site-functions"

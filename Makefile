@@ -2,6 +2,7 @@ PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
 MANDIR ?= $(PREFIX)/share/man/man1
 DOCDIR ?= $(PREFIX)/share/doc/sranime-cli
+LIBDIR ?= $(PREFIX)/lib/sranime-cli
 BASHCOMPDIR ?= $(PREFIX)/share/bash-completion/completions
 ZSHCOMPDIR ?= $(PREFIX)/share/zsh/site-functions
 FISHCOMPDIR ?= $(PREFIX)/share/fish/vendor_completions.d
@@ -13,6 +14,10 @@ install:
 	install -Dm755 sranime-cli $(DESTDIR)$(BINDIR)/sranime-cli
 	install -Dm644 sranime-cli.1 $(DESTDIR)$(MANDIR)/sranime-cli.1
 	install -Dm644 sranime-cli.conf $(DESTDIR)$(DOCDIR)/sranime-cli.conf.example
+	install -d $(DESTDIR)$(LIBDIR)
+	install -m644 lib/sranime-cli/*.sh $(DESTDIR)$(LIBDIR)/
+	install -d $(DESTDIR)$(LIBDIR)/providers
+	install -m644 lib/sranime-cli/providers/*.sh $(DESTDIR)$(LIBDIR)/providers/
 	@if [ -f _sranime-cli-bash ]; then \
 		install -Dm644 _sranime-cli-bash $(DESTDIR)$(BASHCOMPDIR)/sranime-cli; \
 	fi
@@ -27,6 +32,7 @@ uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/sranime-cli
 	rm -f $(DESTDIR)$(MANDIR)/sranime-cli.1
 	rm -f $(DESTDIR)$(DOCDIR)/sranime-cli.conf.example
+	rm -rf $(DESTDIR)$(LIBDIR)
 	rm -f $(DESTDIR)$(BASHCOMPDIR)/sranime-cli
 	rm -f $(DESTDIR)$(ZSHCOMPDIR)/_sranime-cli
 	rm -f $(DESTDIR)$(FISHCOMPDIR)/sranime-cli.fish

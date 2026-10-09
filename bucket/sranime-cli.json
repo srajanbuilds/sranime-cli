@@ -1,0 +1,26 @@
+{
+    "version": "5.3.0",
+    "description": "High-performance POSIX CLI to browse, stream, download, and track anime.",
+    "homepage": "https://github.com/srajanbuilds/sranime-cli",
+    "license": "GPL-3.0-or-later",
+    "url": "https://github.com/srajanbuilds/sranime-cli/archive/refs/tags/v5.3.0.zip",
+    "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bin": [
+        "sranime-cli.cmd",
+        [
+            "sranime-cli.cmd",
+            "sranime"
+        ]
+    ],
+    "suggest": {
+        "mpv": "extras/mpv",
+        "fzf": "main/fzf",
+        "aria2": "main/aria2",
+        "chafa": "main/chafa",
+        "syncplay": "extras/syncplay"
+    },
+    "checkver": "github",
+    "autoupdate": {
+        "url": "https://github.com/srajanbuilds/sranime-cli/archive/refs/tags/v$version.zip"
+    }
+}

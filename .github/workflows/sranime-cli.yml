@@ -6,6 +6,8 @@ on:
   pull_request:
     paths:
       - "sranime-cli"
+      - "lib/**"
+      - "test/**"
 
 jobs:
   sh-checker:
@@ -19,7 +21,7 @@ jobs:
         SHELLCHECK_OPTS: -s sh -o all -e 2250
         SHFMT_OPTS: -i 4 -ci -d
       with:
-        sh_checker_exclude: "_sranime-cli-bash _sranime-cli-zsh"
+        sh_checker_exclude: "_sranime-cli-bash _sranime-cli-zsh completions/sranime-cli.bash completions/_sranime-cli"
       
   check-exec:
     name: Executable Bit
@@ -45,10 +47,23 @@ jobs:
     - name: verify that noone added wget
       run: '! grep wget "./sranime-cli"'
 
-  smoke-test:
-    name: Smoke Tests
-    runs-on: ubuntu-latest
+  smoke-test-unix:
+    name: Smoke Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
     - uses: actions/checkout@v4
     - name: Run smoke tests
+      run: sh test/smoke_test.sh
+
+  smoke-test-windows:
+    name: Smoke Tests (windows-latest)
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run smoke tests in Git Bash
+      shell: bash
       run: sh test/smoke_test.sh

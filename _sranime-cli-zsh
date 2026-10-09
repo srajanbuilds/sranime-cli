@@ -1,7 +1,7 @@
 #compdef sranime-cli
 
 _sranime_cli() {
-    local -a qualities providers formats
+    local -a qualities providers formats logins
     qualities=(
         'best:Highest available quality'
         'worst:Lowest available quality'
@@ -19,14 +19,22 @@ _sranime_cli() {
         'json:Export structured JSON'
         'csv:Export comma-separated values'
     )
+    logins=(
+        'anilist:AniList cloud tracker'
+        'mal:MyAnimeList cloud tracker'
+    )
 
     _arguments -s -S \
         '(-c --continue)'{-c,--continue}'[Continue watching from history]' \
         '(-d --download)'{-d,--download}'[Download the video instead of playing it]' \
+        '--download-dir[Directory for downloaded anime]:directory:_files -/' \
         '--show-history[Display watch history and exit]' \
         '(-D --delete --clear-history)'{-D,--delete,--clear-history}'[Delete history]' \
         '(-l --logview)'{-l,--logview}'[Show logs]' \
         '(-s --syncplay)'{-s,--syncplay}'[Use Syncplay to watch with friends]' \
+        '--room[Set Syncplay room name]:room name:' \
+        '--discord[Enable Discord Rich Presence]' \
+        '--no-discord[Disable Discord Rich Presence]' \
         '(-S --select-nth)'{-S,--select-nth}'[Select nth entry]:index:' \
         '(-p --provider)'{-p,--provider}'[Specify stream provider]:provider:(($providers))' \
         '--list-providers[List available stream providers]' \
@@ -53,6 +61,12 @@ _sranime_cli() {
         '--watch-export[Export watch log to JSON or CSV]:format:(($formats))' \
         '--clear-watch-log[Clear the lifetime watch log]' \
         '--no-preview[Disable the rich terminal preview pane in fzf]' \
+        '--login[Authenticate with cloud tracking service]:service:(($logins))' \
+        '--logout[Log out from cloud tracking service]:service:(($logins))' \
+        '--scrobble-status[Display status of linked tracking accounts]' \
+        '--sync[Open interactive selection menu with AniList Currently Watching]' \
+        '--sync-list[Display AniList Currently Watching list and exit]' \
+        '--no-scrobble[Disable automatic episode tracking for this session]' \
         '--doctor[Run system diagnostics and dependency check]' \
         '*:query:'
 }

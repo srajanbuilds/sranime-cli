@@ -39,11 +39,13 @@ error() {
 # Determine target directories
 if [ "$(id -u)" -eq 0 ]; then
     BINDIR="/usr/local/bin"
+    LIBDIR="/usr/local/lib/sranime-cli"
     MANDIR="/usr/local/share/man/man1"
     BASHDIR="/usr/local/share/bash-completion/completions"
     ZSHDIR="/usr/local/share/zsh/site-functions"
 else
     BINDIR="${HOME}/.local/bin"
+    LIBDIR="${HOME}/.local/lib/sranime-cli"
     MANDIR="${HOME}/.local/share/man/man1"
     BASHDIR="${HOME}/.local/share/bash-completion/completions"
     ZSHDIR="${HOME}/.local/share/zsh/site-functions"
@@ -58,6 +60,15 @@ mkdir -p "${MANDIR}"
 # Fetch binary
 curl -fsSL "${REPO_URL}/sranime-cli" -o "${BINDIR}/sranime-cli" || error "Failed to download sranime-cli script."
 chmod +x "${BINDIR}/sranime-cli"
+
+# Fetch modules
+mkdir -p "${LIBDIR}" "${LIBDIR}/providers"
+for _mod in config.sh discord.sh download.sh network.sh notify.sh preview.sh providers.sh scrobbler.sh syncplay.sh ui.sh utils.sh watchlist.sh watchlog.sh; do
+    curl -fsSL "${REPO_URL}/lib/sranime-cli/${_mod}" -o "${LIBDIR}/${_mod}" 2>/dev/null || true
+done
+for _prov in allanime.sh gogo.sh hianime.sh; do
+    curl -fsSL "${REPO_URL}/lib/sranime-cli/providers/${_prov}" -o "${LIBDIR}/providers/${_prov}" 2>/dev/null || true
+done
 
 # Fetch man page
 curl -fsSL "${REPO_URL}/sranime-cli.1" -o "${MANDIR}/sranime-cli.1" 2>/dev/null || true
