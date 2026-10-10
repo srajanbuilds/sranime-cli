@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-09-28
+
+### Added
+- **Cloud Tracker Synchronization (AniList & Scrobbler)**:
+  - Interactive OAuth2 PIN authentication via `sranime-cli --login anilist`.
+  - Secure credential storage in `$XDG_CONFIG_HOME/sranime-cli/auth.json` with strict `0600` permissions.
+  - Automatic title-to-MediaID resolution (`scrobble_resolve_media_id`) with local TSV caching (`scrobble_id_map.tsv`).
+  - Universal MPV Lua progress hook (`scrobble_prepare_script`) detecting 80% playback completion and EOF events.
+  - Automatic GraphQL mutation dispatch (`SaveMediaListEntry`) to update progress on AniList.
+  - Interactive cloud watchlist sync (`sranime-cli --sync`) populating `fzf` directly with Currently Watching shows and calculating the next episode.
+  - Non-interactive watchlist inspection via `sranime-cli --sync-list`.
+  - `sranime-cli --scrobble-status` and `sranime-cli --logout [service]`.
+  - `--no-scrobble` / `--scrobble` session flags and `auto_scrobble` configuration variable.
+  - Unit test suite for scrobbler (`test/test_scrobbler.sh`) with 22 automated tests.
+
+- **Accelerated Parallel Downloads & Batch Engine**:
+  - Downloader hierarchy prioritizing `aria2c` 16-connection chunking, with seamless fallback to `yt-dlp` (HLS extraction), `ffmpeg`, and `curl`.
+  - Robust cross-platform filename sanitization removing illegal filesystem characters (`\ / : * ? " < > |`).
+  - Atomic `.part` buffering to prevent corrupted incomplete downloads.
+  - Pure POSIX episode range expression parser (`parse_episode_range`) supporting `-e 1-12`, `-e 1,3,5-8`, and `-e all`.
+  - Plex and Jellyfin standardized season folder structure formatting: `${download_dir}/${anime}/Season 01/${anime} - S01E${ep:02d} [${quality}].mp4`.
+  - Batch queue integration directly into playback dispatcher with episode summary reports.
+  - Unit test suite for downloads (`test/test_download.sh`) with 17 automated tests.
+
+- **Social & Multiplayer Integrations**:
+  - Native Discord IPC Rich Presence client (`lib/sranime-cli/discord.sh`) connecting to UNIX domain sockets and Windows named pipes without external daemons.
+  - Opcode 0 Handshake and Opcode 1 `SET_ACTIVITY` payload framing with playback timestamps and MPV asset art.
+  - Background presence monitor tracking player PID and clearing status upon player exit.
+  - Turnkey Syncplay watch party integration (`lib/sranime-cli/syncplay.sh`).
+  - `--room [name]` CLI option to set room name and automatically launch platform Syncplay executable.
+  - `--discord` and `--no-discord` flags to toggle Rich Presence.
+  - Unit test suite (`test/test_discord.sh`) with 10 automated tests.
+
+- **Packaging, Multi-OS CI/CD & Distribution**:
+  - Windows Scoop manifest (`bucket/sranime-cli.json` and `sranime-cli.json`) with auto-update checks and binary shims (`sranime-cli.cmd`, `sranime`).
+  - Arch Linux AUR package definition (`PKGBUILD`).
+  - Homebrew formula (`Formula/sranime-cli.rb`) updated for `lib/` modules, man page, and completions.
+  - Synchronized Bash, Zsh, and Fish shell autocompletions for all CLI flags.
+  - Updated `Makefile` with clean install and uninstall targets for `lib/sranime-cli/`.
+  - Updated universal `install.sh` and `uninstall.sh` with library module installation.
+  - GitHub Actions multi-OS continuous integration matrix testing across Ubuntu, macOS, and Windows Git Bash.
+
 ## [5.3.0] - 2026-09-28
 
 ### Added

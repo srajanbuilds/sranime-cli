@@ -36,6 +36,7 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
 
 ## Table of Contents
 
+- [Features](#features)
 - [Configuration](#configuration)
 - [Fixing errors](#fixing-errors)
 - [Install](#install)
@@ -49,6 +50,29 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
 - [Homies](#homies)
 - [Contribution Guidelines](./CONTRIBUTING.md)
 - [Disclaimer](./disclaimer.md)
+
+## Features
+
+- **Zero-Downtime Multi-Provider Streaming**: Automatic failover across `hianime` (default), `allanime`, and `gogo` providers (`-p, --provider`).
+- **Rich Terminal UI & Poster Art**: Dual-column `fzf` side preview pane with ANSI metadata cards, English/Japanese titles, synopsis, watched indicators, and terminal cover art via `chafa`.
+- **Lifetime Watch Journal & Analytics**:
+  - Append-only TSV journal (`$XDG_STATE_HOME/sranime-cli/watch.log`).
+  - Chronological history viewer with title and date range filters (`sranime-cli -W "Frieren"`, `sranime-cli -W "2026-09-01..2026-09-30"`).
+  - Personal viewing statistics (`sranime-cli --watch-stats`) computing total watch time, top series, and viewing streaks via a pure POSIX Julian Day algorithm.
+  - Data portability with structured JSON and CSV exports (`sranime-cli --watch-export json`).
+- **AniList Cloud Tracking & Sync**:
+  - Interactive OAuth2 login via `sranime-cli --login anilist` with credentials securely locked at `0600` permissions.
+  - Automatic 80% playback completion scrobbling via MPV Lua progress hook.
+  - Direct cloud watchlist resumption: `sranime-cli --sync` opens your AniList Currently Watching list and launches the next episode in one click.
+  - Non-interactive watchlist inspection via `sranime-cli --sync-list`.
+- **High-Speed Chunked Downloads & Batch Engine**:
+  - Accelerated 16-connection parallel chunk downloads with `aria2c` (with fallback to `yt-dlp`, `ffmpeg`, and `curl`).
+  - Flexible episode range parser supporting single, discrete, and bulk ranges: `-d -e 1-12`, `-d -e 1,3,5-8`, or `-d -e all`.
+  - Plex and Jellyfin standardized season folder organization (`${download_dir}/${anime}/Season 01/...`).
+- **Social & Multiplayer Watch Parties**:
+  - Native Discord IPC Rich Presence client (`--discord`, `--no-discord`) displaying live episode progress and player art.
+  - Synchronized watch parties with friends via Turnkey Syncplay integration: `sranime-cli --room FridayNight "Sousou no Frieren"`.
+- **Cross-Platform & POSIX Compliant**: Works seamlessly on Linux, macOS, and Windows (PowerShell/CMD/Git Bash), with zero mandatory runtime overhead.
 
 ## Configuration
 
@@ -585,6 +609,105 @@ For install instructions visit [ani-skip](https://github.com/synacktraa/ani-skip
 Ani-skip uses the external lua script function of mpv and as such – for now – only works with mpv.
 
 **Warning:** For now, ani-skip does **not** seem to work under Windows.
+
+## Advanced Usage & Feature Guides
+
+### 1. Cloud Tracker Sync (AniList)
+
+Authenticate once to automatically sync your viewing progress with AniList:
+
+```sh
+# 1. Log in via OAuth2 token flow
+sranime-cli --login anilist
+
+# 2. Check linked account status
+sranime-cli --scrobble-status
+
+# 3. Browse and resume from your AniList Currently Watching list
+sranime-cli --sync
+
+# 4. View watchlist progress directly in the terminal
+sranime-cli --sync-list
+```
+
+While streaming in MPV, an integrated Lua progress observer monitors playback. When reaching **80% of an episode** or reaching the credits, `sranime-cli` automatically scrobbles the episode to AniList and sends a desktop notification.
+
+To disable scrobbling for a specific session:
+```sh
+sranime-cli --no-scrobble "One Piece"
+```
+
+---
+
+### 2. High-Speed Parallel Downloads & Batch Ranges
+
+Download single episodes, custom ranges, or entire seasons with multi-connection chunking:
+
+```sh
+# Batch download episodes 1 through 12 of Frieren
+sranime-cli -d -e 1-12 "Frieren"
+
+# Download discrete episodes and ranges
+sranime-cli -d -e 1,3,5-8 "Cyberpunk Edgerunners"
+
+# Download an entire anime series from episode 1 to finale
+sranime-cli -d -e all "Steins;Gate"
+
+# Specify a custom destination directory
+sranime-cli -d -e 1-4 --download-dir "~/Media/Anime" "Bocchi the Rock"
+```
+
+Downloads are partitioned across 16 parallel connections using `aria2c` (or segment extraction via `yt-dlp`) and automatically organized into Plex/Jellyfin compliant season directories:
+```text
+~/Videos/Anime/
+└── Frieren Beyond Journey's End (2023)/
+    └── Season 01/
+        ├── Frieren Beyond Journey's End - S01E01 [1080p].mp4
+        ├── Frieren Beyond Journey's End - S01E02 [1080p].mp4
+        └── ...
+```
+
+---
+
+### 3. Lifetime Watch Journal & Personal Analytics
+
+Keep track of everything you watch and download without third-party services:
+
+```sh
+# View chronological watch log
+sranime-cli -W
+
+# Filter log by anime title
+sranime-cli -W "Frieren"
+
+# Filter log by date range
+sranime-cli -W "2026-09-01..2026-09-30"
+
+# Inspect viewing analytics and Julian Day streaks
+sranime-cli --watch-stats
+
+# Export lifetime log for spreadsheets or backups
+sranime-cli --watch-export json > my_watch_history.json
+sranime-cli --watch-export csv > my_watch_history.csv
+```
+
+---
+
+### 4. Turnkey Syncplay Watch Parties & Discord RPC
+
+Watch anime simultaneously with friends in synchronized rooms:
+
+```sh
+# Join or create a Syncplay watch party room
+sranime-cli --room AnimeNight "Attack on Titan"
+```
+
+Discord Rich Presence is enabled by default. While watching, your Discord status updates with the active anime title, episode number, audio mode (Sub/Dub), and elapsed time.
+
+To disable Discord Rich Presence:
+```sh
+sranime-cli --no-discord "Naruto"
+```
 
 ## FAQ
 <details>
