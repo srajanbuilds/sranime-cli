@@ -709,6 +709,34 @@ To disable Discord Rich Presence:
 sranime-cli --no-discord "Naruto"
 ```
 
+### 5. Continuous Autoplay Binging & Exact Timestamp Resumption
+
+Binge-watch anime without touching the keyboard between episodes, or resume exactly where you left off:
+
+```sh
+# Continuous autoplay: when Ep 1 finishes, automatically start Ep 2 after 3 seconds
+sranime-cli -A "Chainsaw Man"
+
+# Limit autoplay to 3 episodes (sleep timer friendly)
+sranime-cli -A --autoplay-limit 3 "Jujutsu Kaisen"
+
+# Resume playback from your exact saved timestamp checkpoint
+sranime-cli -R "Frieren"
+
+# Jump directly to a specific timestamp on start
+sranime-cli --start-time 14:20 "Sousou no Frieren"
+
+# Inspect all saved in-progress watch checkpoints
+sranime-cli --show-checkpoints
+
+# Clear saved checkpoints
+sranime-cli --clear-checkpoints
+```
+
+Whenever playback is paused or closed mid-episode, `sranime-cli`'s MPV observer automatically records the exact second and percentage. When starting an episode, `-R` seeks instantly to that timestamp.
+
+---
+
 ## FAQ
 <details>
 	

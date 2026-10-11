@@ -26,6 +26,12 @@ _sranime_cli() {
 
     _arguments -s -S \
         '(-c --continue)'{-c,--continue}'[Continue watching from history]' \
+        '(-A --autoplay)'{-A,--autoplay}'[Automatically play subsequent episodes continuously]' \
+        '--autoplay-limit[Limit number of consecutive autoplay episodes]:count:' \
+        '(-R --resume)'{-R,--resume}'[Resume playback from saved timestamp checkpoint]' \
+        '--start-time[Seek to exact timestamp on playback start]:time (MM:SS):' \
+        '--show-checkpoints[Display active in-progress watch checkpoints]' \
+        '--clear-checkpoints[Clear all stored playback timestamp checkpoints]' \
         '(-d --download)'{-d,--download}'[Download the video instead of playing it]' \
         '--download-dir[Directory for downloaded anime]:directory:_files -/' \
         '--show-history[Display watch history and exit]' \

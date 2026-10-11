@@ -16,6 +16,7 @@ export SRANIME_LIB_DIR
 if [ -n "$SRANIME_LIB_DIR" ]; then
     . "$SRANIME_LIB_DIR/utils.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/providers.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/playback.sh" 2>/dev/null || true
 fi
 
 # UI
@@ -171,6 +172,18 @@ help_info() {
         Enable Discord Rich Presence (default: enabled)
       --no-discord
         Disable Discord Rich Presence
+      -A, --autoplay
+        Automatically play subsequent episodes continuously (binge mode)
+      --autoplay-limit [count]
+        Limit number of consecutive autoplay episodes
+      -R, --resume
+        Resume playback from the last saved timestamp checkpoint
+      --start-time [time]
+        Seek to exact timestamp (MM:SS, HH:MM:SS, or seconds) on start
+      --show-checkpoints
+        Display active in-progress anime watch checkpoints
+      --clear-checkpoints
+        Clear all saved timestamp checkpoints
       --no-preview
         Disable the rich terminal preview pane in fzf
       --sync
@@ -583,9 +596,39 @@ play_episode() {
 
             _scrobble_hook=""
             _scrobble_trig=""
+            _pos_trig=""
             _scrobble_lua=""
             _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
-            if [ "${auto_scrobble:-1}" = 1 ] && [ -f "$_lib_dir/scrobbler.sh" ]; then
+
+            # Timestamp Resumption Check
+            _start_sec=""
+            if [ -n "$start_time" ]; then
+                if [ -f "$_lib_dir/playback.sh" ]; then
+                    . "$_lib_dir/playback.sh" 2>/dev/null || true
+                    _start_sec=$(playback_parse_time "$start_time")
+                fi
+            elif [ "${auto_resume:-0}" = 1 ] || [ "${autoplay:-0}" = 1 ]; then
+                if [ -f "$_lib_dir/playback.sh" ]; then
+                    . "$_lib_dir/playback.sh" 2>/dev/null || true
+                    _cp=$(playback_get_checkpoint "$anime_title" "$ep_no" 2>/dev/null || true)
+                    if [ -n "$_cp" ]; then
+                        _start_sec=$(printf "%s" "$_cp" | cut -f2)
+                        _fmt_sec=$(printf "%s" "$_cp" | cut -f3)
+                        _pct_sec=$(printf "%s" "$_cp" | cut -f4)
+                        info "Resuming ${anime_title} (Ep ${ep_no}) from ${_fmt_sec} (${_pct_sec}%)..."
+                    fi
+                fi
+            fi
+            [ -n "$_start_sec" ] && [ "$_start_sec" -gt 0 ] 2>/dev/null && _mpv_flags="$_mpv_flags --start=$_start_sec"
+
+            if [ -f "$_lib_dir/playback.sh" ]; then
+                . "$_lib_dir/playback.sh" 2>/dev/null || true
+                [ -f "$_lib_dir/scrobbler.sh" ] && . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
+                _scrobble_trig=$(make_temp 2>/dev/null || echo "/tmp/sranime_trig_$$")
+                _pos_trig=$(make_temp 2>/dev/null || echo "/tmp/sranime_pos_$$")
+                _scrobble_lua=$(playback_prepare_observer "$_scrobble_trig" "$_pos_trig" 2>/dev/null || true)
+                [ -n "$_scrobble_lua" ] && [ -f "$_scrobble_lua" ] && _scrobble_hook="--script=$_scrobble_lua"
+            elif [ "${auto_scrobble:-1}" = 1 ] && [ -f "$_lib_dir/scrobbler.sh" ]; then
                 . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
                 _scrobble_trig=$(make_temp 2>/dev/null || echo "/tmp/sranime_trig_$$")
                 _scrobble_lua=$(scrobble_prepare_script "$_scrobble_trig" 2>/dev/null || true)
@@ -623,6 +666,19 @@ play_episode() {
                         scrobble_episode "$anime_title" "$ep_no"
                     fi
                     rm -f "$_scrobble_trig" "$_scrobble_lua" 2>/dev/null || true
+                fi
+                if [ -n "$_pos_trig" ]; then
+                    if [ -s "$_pos_trig" ]; then
+                        _pos_line=$(cat "$_pos_trig" | head -n 1)
+                        _pos_val=$(printf "%s" "$_pos_line" | cut -f1)
+                        _pos_pct=$(printf "%s" "$_pos_line" | cut -f2)
+                        if [ "$_pos_val" = "EOF" ] || [ "${_pos_pct:-0}" = "100" ]; then
+                            playback_clear_checkpoint "$anime_title" 2>/dev/null || true
+                        elif [ -n "$_pos_val" ] && [ "$_pos_val" -gt 5 ] 2>/dev/null; then
+                            playback_save_checkpoint "$anime_title" "$ep_no" "$_pos_val" "$_pos_pct" 2>/dev/null || true
+                        fi
+                    fi
+                    rm -f "$_pos_trig" 2>/dev/null || true
                 fi
                 [ "$exit_after_play" = 1 ] && [ -z "$_range" ] && exit "$mpv_exitcode"
             fi
@@ -703,6 +759,25 @@ play() {
     else
         printf "%s" "$ep_list" | grep -q "^$ep_no$" || die "Invalid episode!"
         play_episode
+        if [ "${autoplay:-0}" = 1 ]; then
+            _binge_count=1
+            while true; do
+                if [ -n "$autoplay_limit" ] && [ "$_binge_count" -ge "$autoplay_limit" ] 2>/dev/null; then
+                    info "Reached autoplay limit of ${autoplay_limit} episodes."
+                    break
+                fi
+                _next_ep=$(printf "%s\n" "$ep_list" | sed -n "/^${ep_no}\$/{n;p;}")
+                if [ -z "$_next_ep" ]; then
+                    info "==> Reached end of episode list for ${anime_title}!"
+                    break
+                fi
+                ep_no="$_next_ep"
+                _binge_count=$((_binge_count + 1))
+                printf "\n\033[1;36m==> [Autoplay] Continuing to Episode %s in 3 seconds... (Ctrl+C to stop)\033[0m\n" "$ep_no"
+                sleep 3 || break
+                play_episode
+            done
+        fi
     fi
     # moves up to stored position and deletes to end
     [ "$player_function" != "debug" ] && [ "$player_function" != "download" ] && tput rc && tput ed
@@ -733,6 +808,10 @@ enable_preview="${SRANIME_CLI_PREVIEW:-${enable_preview:-1}}"
 auto_scrobble="${SRANIME_CLI_AUTO_SCROBBLE:-${auto_scrobble:-1}}"
 enable_discord_rpc="${SRANIME_CLI_DISCORD:-${enable_discord_rpc:-1}}"
 syncplay_room="${SRANIME_SYNCPLAY_ROOM:-WatchParty}"
+autoplay="${SRANIME_CLI_AUTOPLAY:-0}"
+autoplay_limit="${SRANIME_CLI_AUTOPLAY_LIMIT:-}"
+auto_resume="${SRANIME_CLI_RESUME:-0}"
+start_time="${SRANIME_CLI_START_TIME:-}" 
 ACTIVE_PROVIDER="${SRANIME_CLI_PROVIDER:-${active_provider:-${ACTIVE_PROVIDER:-hianime}}}"
 export ACTIVE_PROVIDER
 
@@ -999,6 +1078,36 @@ while [ $# -gt 0 ]; do
             ;;
         --no-discord)
             enable_discord_rpc=0
+            ;;
+        -A | --autoplay)
+            autoplay=1
+            no_detach=1
+            ;;
+        --autoplay-limit)
+            [ $# -lt 2 ] && die "missing argument for --autoplay-limit!"
+            autoplay_limit="$2"
+            shift
+            ;;
+        -R | --resume)
+            auto_resume=1
+            ;;
+        --start-time)
+            [ $# -lt 2 ] && die "missing argument for --start-time!"
+            start_time="$2"
+            shift
+            ;;
+        --show-checkpoints)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/playback.sh" ] && . "$_lib_dir/playback.sh" 2>/dev/null || true
+            playback_list_checkpoints
+            exit 0
+            ;;
+        --clear-checkpoints)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/playback.sh" ] && . "$_lib_dir/playback.sh" 2>/dev/null || true
+            : > "${SRANIME_CLI_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sranime-cli}/checkpoints.tsv"
+            info "Playback checkpoints cleared."
+            exit 0
             ;;
         --room)
             [ $# -lt 2 ] && die "missing argument for --room!"

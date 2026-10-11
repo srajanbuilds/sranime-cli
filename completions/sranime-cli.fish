@@ -1,6 +1,13 @@
 # fish completion for sranime-cli
 
 complete -c sranime-cli -s c -l continue -d "Continue watching from history"
+complete -c sranime-cli -s A -l autoplay -d "Automatically play subsequent episodes continuously"
+complete -c sranime-cli -l autoplay-limit -d "Limit number of consecutive autoplay episodes" -x
+complete -c sranime-cli -s R -l resume -d "Resume playback from saved timestamp checkpoint"
+complete -c sranime-cli -l start-time -d "Seek to exact timestamp on start" -x
+complete -c sranime-cli -l show-checkpoints -d "Display active in-progress watch checkpoints"
+complete -c sranime-cli -l clear-checkpoints -d "Clear all stored playback timestamp checkpoints"
+
 complete -c sranime-cli -s d -l download -d "Download the video instead of playing it"
 complete -c sranime-cli -l download-dir -d "Directory for downloaded anime files" -x -a "(__fish_complete_directories)"
 complete -c sranime-cli -s D -l delete -d "Delete history"

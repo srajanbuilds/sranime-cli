@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-09-28
+
+### Added
+- **Continuous Autoplay Binging Engine (`lib/sranime-cli/playback.sh`)**:
+  - `-A, --autoplay` flag to automatically queue and stream subsequent episodes without returning to the menu or re-running commands.
+  - `--autoplay-limit [count]` flag to restrict binge sessions to a specific number of episodes.
+  - Countdown intermission banner with graceful cancellation (`Ctrl+C`).
+- **Timestamp-Precision Resumption & Checkpoints**:
+  - Automatic playback position tracking via MPV Lua observer (`shutdown` event and periodic 10-second timer).
+  - `-R, --resume` flag to seek immediately to the exact second where you left off.
+  - `--start-time [time]` flag supporting `MM:SS`, `HH:MM:SS`, or integer seconds.
+  - `--show-checkpoints` command displaying a table of in-progress anime titles, episode numbers, timestamps, and completion percentages.
+  - `--clear-checkpoints` command to reset stored playback positions.
+  - Unit test suite (`test/test_playback.sh`) with 19 automated tests.
+
 ## [5.4.0] - 2026-09-28
 
 ### Added
