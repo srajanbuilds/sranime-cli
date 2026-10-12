@@ -17,6 +17,7 @@ if [ -n "$SRANIME_LIB_DIR" ]; then
     . "$SRANIME_LIB_DIR/utils.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/providers.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/playback.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/discovery.sh" 2>/dev/null || true
 fi
 
 # UI
@@ -184,6 +185,14 @@ help_info() {
         Display active in-progress anime watch checkpoints
       --clear-checkpoints
         Clear all saved timestamp checkpoints
+      --seasonal [season] [year]
+        Browse popular anime of the current or specified broadcast season
+      --trending
+        Browse currently trending anime series
+      --calendar, --schedule [hours]
+        Display upcoming airing schedule with countdown timers
+      --similar [title]
+        Find and stream anime recommendations based on a series
       --no-preview
         Disable the rich terminal preview pane in fzf
       --sync
@@ -811,7 +820,10 @@ syncplay_room="${SRANIME_SYNCPLAY_ROOM:-WatchParty}"
 autoplay="${SRANIME_CLI_AUTOPLAY:-0}"
 autoplay_limit="${SRANIME_CLI_AUTOPLAY_LIMIT:-}"
 auto_resume="${SRANIME_CLI_RESUME:-0}"
-start_time="${SRANIME_CLI_START_TIME:-}" 
+start_time="${SRANIME_CLI_START_TIME:-}"
+seasonal_name=""
+seasonal_year=""
+similar_target=""  
 ACTIVE_PROVIDER="${SRANIME_CLI_PROVIDER:-${active_provider:-${ACTIVE_PROVIDER:-hianime}}}"
 export ACTIVE_PROVIDER
 
@@ -1109,6 +1121,37 @@ while [ $# -gt 0 ]; do
             info "Playback checkpoints cleared."
             exit 0
             ;;
+        --seasonal)
+            source=seasonal
+            if [ -n "$2" ] && ! printf "%s" "$2" | grep -q "^-"; then
+                seasonal_name="$2"
+                shift
+                if [ -n "$2" ] && ! printf "%s" "$2" | grep -q "^-"; then
+                    seasonal_year="$2"
+                    shift
+                fi
+            fi
+            ;;
+        --trending)
+            source=trending
+            ;;
+        --calendar | --schedule)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/discovery.sh" ] && . "$_lib_dir/discovery.sh" 2>/dev/null || true
+            _hours=48
+            if [ -n "$2" ] && printf "%s" "$2" | grep -q "^[0-9]\+$"; then
+                _hours="$2"
+                shift
+            fi
+            discovery_fetch_calendar "$_hours"
+            exit 0
+            ;;
+        --similar)
+            [ $# -lt 2 ] && die "missing title argument for --similar!"
+            source=similar
+            similar_target="$2"
+            shift
+            ;;
         --room)
             [ $# -lt 2 ] && die "missing argument for --room!"
             syncplay_room="$2"
@@ -1174,6 +1217,39 @@ trap 'cleanup; exit 1' INT HUP TERM
 
 # searching
 case "$source" in
+    seasonal)
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        [ -f "$_lib_dir/discovery.sh" ] && . "$_lib_dir/discovery.sh" 2>/dev/null || true
+        info "Fetching anime broadcast season..."
+        _seasonal_items=$(discovery_fetch_seasonal "$seasonal_name" "$seasonal_year") || die "Failed to fetch seasonal anime"
+        [ -z "$_seasonal_items" ] && die "No anime found for season!"
+        _selected=$(printf "%s\n" "$_seasonal_items" | menu "Select Seasonal Anime: " "" "--delimiter='\t' --with-nth=3")
+        [ -z "$_selected" ] && exit 0
+        query=$(printf "%s" "$_selected" | cut -f 2 | sed 's| |+|g')
+        source=search
+        ;;
+    trending)
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        [ -f "$_lib_dir/discovery.sh" ] && . "$_lib_dir/discovery.sh" 2>/dev/null || true
+        info "Fetching trending anime..."
+        _trending_items=$(discovery_fetch_trending) || die "Failed to fetch trending anime"
+        [ -z "$_trending_items" ] && die "No trending anime found!"
+        _selected=$(printf "%s\n" "$_trending_items" | menu "Select Trending Anime: " "" "--delimiter='\t' --with-nth=3")
+        [ -z "$_selected" ] && exit 0
+        query=$(printf "%s" "$_selected" | cut -f 2 | sed 's| |+|g')
+        source=search
+        ;;
+    similar)
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        [ -f "$_lib_dir/discovery.sh" ] && . "$_lib_dir/discovery.sh" 2>/dev/null || true
+        info "Fetching recommendations for $similar_target..."
+        _similar_items=$(discovery_fetch_similar "$similar_target") || die "Failed to fetch recommendations"
+        [ -z "$_similar_items" ] && die "No recommendations found for $similar_target!"
+        _selected=$(printf "%s\n" "$_similar_items" | menu "Similar Anime: " "" "--delimiter='\t' --with-nth=3")
+        [ -z "$_selected" ] && exit 0
+        query=$(printf "%s" "$_selected" | cut -f 2 | sed 's| |+|g')
+        source=search
+        ;;
     sync)
         _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
         [ -f "$_lib_dir/scrobbler.sh" ] && . "$_lib_dir/scrobbler.sh" 2>/dev/null || true

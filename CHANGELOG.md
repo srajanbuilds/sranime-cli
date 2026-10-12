@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-09-28
+
+### Added
+- **Intelligent Discovery Engine (`lib/sranime-cli/discovery.sh`)**:
+  - `--seasonal [season] [year]` flag to browse popular anime from the current or specified broadcast season.
+  - `--trending` flag to discover top trending anime releases.
+  - `--calendar / --schedule [hours]` command rendering upcoming broadcast tables with live countdown timers (`In 2h 15m`).
+  - `--similar [title]` recommendation engine querying AniList's recommendation graphs with community vote rankings.
+  - Interactive selection from discovery lists launches episode selection and streaming automatically.
+  - Dedicated unit test suite (`test/test_discovery.sh`) with 10 automated tests.
+
 ## [5.5.0] - 2026-09-28
 
 ### Added

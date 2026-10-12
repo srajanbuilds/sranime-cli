@@ -737,6 +737,31 @@ Whenever playback is paused or closed mid-episode, `sranime-cli`'s MPV observer 
 
 ---
 
+### 6. Intelligent Discovery, Seasonal Browser & Airing Calendar
+
+Explore anime without knowing what to search for:
+
+```sh
+# Browse top popular anime for the current broadcast season (e.g. Fall 2026)
+sranime-cli --seasonal
+
+# Browse a specific season and year
+sranime-cli --seasonal winter 2024
+
+# Browse currently trending anime releases
+sranime-cli --trending
+
+# View upcoming broadcast calendar with localized countdown timers
+sranime-cli --calendar
+
+# Discover top community recommendations based on any anime
+sranime-cli --similar "Sousou no Frieren"
+```
+
+Selecting an anime from `--seasonal`, `--trending`, or `--similar` opens the episode picker immediately and begins streaming seamlessly.
+
+---
+
 ## FAQ
 <details>
 	

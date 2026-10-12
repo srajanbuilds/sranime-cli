@@ -32,6 +32,10 @@ _sranime_cli() {
         '--start-time[Seek to exact timestamp on playback start]:time (MM:SS):' \
         '--show-checkpoints[Display active in-progress watch checkpoints]' \
         '--clear-checkpoints[Clear all stored playback timestamp checkpoints]' \
+        '--seasonal[Browse popular anime from broadcast season]:season:' \
+        '--trending[Browse currently trending anime series]' \
+        '(--calendar --schedule)'{--calendar,--schedule}'[Display upcoming airing schedule with countdowns]' \
+        '--similar[Find and stream recommendations based on title]:anime title:' \
         '(-d --download)'{-d,--download}'[Download the video instead of playing it]' \
         '--download-dir[Directory for downloaded anime]:directory:_files -/' \
         '--show-history[Display watch history and exit]' \

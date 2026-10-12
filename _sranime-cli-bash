@@ -6,7 +6,7 @@ _sranime_cli() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts="-c --continue -A --autoplay --autoplay-limit -R --resume --start-time --show-checkpoints --clear-checkpoints -d --download -D --delete --clear-history --show-history -l --logview -s --syncplay --room -S --select-nth -p --provider --list-providers -q --quality -v --vlc -V --version -h --help -e --episode -r --range --dub --rofi --dmenu --skip --no-detach --exit-after-play -N --nextep-countdown -U --update --edit-config --validate-config --dump-config --watchlist --watchlist-clear -W --watch-log --watch-stats --watch-export --clear-watch-log --no-preview --sync --sync-list --no-scrobble --login --logout --scrobble-status --discord --no-discord --download-dir --doctor"
+    opts="-c --continue -A --autoplay --autoplay-limit -R --resume --start-time --show-checkpoints --seasonal --trending --calendar --schedule --similar --clear-checkpoints -d --download -D --delete --clear-history --show-history -l --logview -s --syncplay --room -S --select-nth -p --provider --list-providers -q --quality -v --vlc -V --version -h --help -e --episode -r --range --dub --rofi --dmenu --skip --no-detach --exit-after-play -N --nextep-countdown -U --update --edit-config --validate-config --dump-config --watchlist --watchlist-clear -W --watch-log --watch-stats --watch-export --clear-watch-log --no-preview --sync --sync-list --no-scrobble --login --logout --scrobble-status --discord --no-discord --download-dir --doctor"
     qualities="best worst 360p 480p 720p 1080p"
     providers="hianime allanime gogo"
     formats="json csv"
@@ -33,7 +33,7 @@ _sranime_cli() {
             COMPREPLY=( $(compgen -d -- "$cur") )
             return 0
             ;;
-        -S|--select-nth|-e|--episode|-r|--range|--room|-A|--autoplay|--autoplay-limit|-R|--resume|--start-time)
+        -S|--select-nth|-e|--episode|-r|--range|--room|-A|--autoplay|--autoplay-limit|-R|--resume|--start-time|--similar|--seasonal)
             return 0
             ;;
     esac

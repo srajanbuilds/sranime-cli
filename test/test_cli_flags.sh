@@ -35,6 +35,10 @@ assert_contains "Help contains --autoplay flag" "$_help" "--autoplay"
 assert_contains "Help contains --resume flag" "$_help" "--resume"
 assert_contains "Help contains --start-time flag" "$_help" "--start-time"
 assert_contains "Help contains --show-checkpoints flag" "$_help" "--show-checkpoints"
+assert_contains "Help contains --seasonal flag" "$_help" "--seasonal"
+assert_contains "Help contains --trending flag" "$_help" "--trending"
+assert_contains "Help contains --calendar flag" "$_help" "--calendar"
+assert_contains "Help contains --similar flag" "$_help" "--similar"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"

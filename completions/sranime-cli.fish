@@ -52,3 +52,8 @@ complete -c sranime-cli -l sync -d "Open interactive menu with your AniList Curr
 complete -c sranime-cli -l sync-list -d "Display your AniList Currently Watching watchlist and exit"
 complete -c sranime-cli -l no-scrobble -d "Disable automatic episode tracking for this session"
 complete -c sranime-cli -l doctor -d "Run system diagnostics and dependency check"
+complete -c sranime-cli -l seasonal -d "Browse popular anime of broadcast season" -x
+complete -c sranime-cli -l trending -d "Browse currently trending anime series"
+complete -c sranime-cli -l calendar -d "Display upcoming airing schedule with countdowns"
+complete -c sranime-cli -l schedule -d "Display upcoming airing schedule with countdowns"
+complete -c sranime-cli -l similar -d "Discover recommendations based on anime title" -x
