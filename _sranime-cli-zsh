@@ -73,6 +73,8 @@ _sranime_cli() {
         '--no-preview[Disable the rich terminal preview pane in fzf]' \
         '--login[Authenticate with cloud tracking service]:service:(($logins))' \
         '--logout[Log out from cloud tracking service]:service:(($logins))' \
+        '--export-mal[Export watch log in MyAnimeList XML format]:file:_files' \
+        '--import-mal[Import watch history from MyAnimeList XML file]:file:_files' \
         '--scrobble-status[Display status of linked tracking accounts]' \
         '--sync[Open interactive selection menu with AniList Currently Watching]' \
         '--sync-list[Display AniList Currently Watching list and exit]' \

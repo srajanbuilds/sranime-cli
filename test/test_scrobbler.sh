@@ -125,4 +125,56 @@ assert_contains "Parsed watchlist shows progress 18/28" "$parsed_entry" "[Ep 18/
 # Cleanup
 rm -rf "$TEST_CONFIG_DIR" 2>/dev/null || true
 
+# Test 23: scrobble_verify_mal rejects empty token
+if scrobble_verify_mal ""; then
+    verify_mal_res="ok"
+else
+    verify_mal_res="fail"
+fi
+assert_eq "verify MAL with empty token fails" "fail" "$verify_mal_res"
+
+# Setup isolated directory for MAL testing
+TEST_MAL_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'sranime_mal_test')"
+export XDG_CONFIG_HOME="$TEST_MAL_DIR/config"
+export XDG_DATA_HOME="$TEST_MAL_DIR/data"
+export XDG_STATE_HOME="$TEST_MAL_DIR/state"
+export SRANIME_CLI_STATE_DIR="$TEST_MAL_DIR/state/sranime-cli"
+export SRANIME_CLI_CONFIG_DIR="$TEST_MAL_DIR/config/sranime-cli"
+_auth_dir="$SRANIME_CLI_CONFIG_DIR"
+_auth_file="$_auth_dir/auth.json"
+
+# Test 24: MAL auth save and load
+_mal_token="mock_mal_token_12345"
+_mal_uname="mock_mal_user"
+_save_auth
+_mal_token=""
+_mal_uname=""
+_load_auth
+assert_eq "Loaded MAL token matches" "mock_mal_token_12345" "$_mal_token"
+assert_eq "Loaded MAL username matches" "mock_mal_user" "$_mal_uname"
+
+# Test 25: MAL status shows Connected
+stat_mal=$(scrobble_status)
+assert_contains "Status shows MyAnimeList Connected" "$stat_mal" "MyAnimeList"
+assert_contains "Status shows Connected text" "$stat_mal" "Connected"
+
+# Test 26: Export MAL XML structure
+xml_out="$TEST_MAL_DIR/test_export.xml"
+_mock_log="${SRANIME_CLI_STATE_DIR}/watch.log"
+mkdir -p "$SRANIME_CLI_STATE_DIR"
+printf "2026-09-28T12:00:00Z\tWATCH\t14\t18480\tSousou no Frieren\thianime\n" > "$_mock_log"
+scrobble_export_mal "$xml_out" >/dev/null 2>&1
+[ -f "$xml_out" ] && assert_eq "Exported MAL XML exists" "1" "1" || assert_eq "Exported MAL XML exists" "1" "0"
+xml_content=$(cat "$xml_out")
+assert_contains "XML contains myanimelist root" "$xml_content" "<myanimelist>"
+assert_contains "XML contains series_title" "$xml_content" "Sousou no Frieren"
+assert_contains "XML contains watched_episodes" "$xml_content" "<my_watched_episodes>14</my_watched_episodes>"
+
+# Test 27: Import MAL XML
+scrobble_import_mal "$xml_out" >/dev/null 2>&1
+assert_contains "Watch log contains imported entry" "$(cat "$_mock_log")" "Sousou no Frieren"
+
+# Cleanup MAL test dir
+rm -rf "$TEST_MAL_DIR" 2>/dev/null || true
+
 print_test_summary

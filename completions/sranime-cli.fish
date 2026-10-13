@@ -48,6 +48,8 @@ complete -c sranime-cli -l no-preview -d "Disable rich terminal preview pane"
 complete -c sranime-cli -l login -d "Authenticate with cloud anime trackers" -x -a "anilist mal"
 complete -c sranime-cli -l scrobble-status -d "Display status of linked tracking accounts"
 complete -c sranime-cli -l logout -d "Log out from cloud tracking services" -x -a "anilist mal"
+complete -c sranime-cli -l export-mal -d "Export watch log in MyAnimeList XML format" -r
+complete -c sranime-cli -l import-mal -d "Import watch history from MyAnimeList XML file" -r
 complete -c sranime-cli -l sync -d "Open interactive menu with your AniList Currently Watching shows"
 complete -c sranime-cli -l sync-list -d "Display your AniList Currently Watching watchlist and exit"
 complete -c sranime-cli -l no-scrobble -d "Disable automatic episode tracking for this session"

@@ -207,6 +207,10 @@ help_info() {
         Display status of linked anime tracking accounts
       --logout [anilist|mal]
         Log out from cloud tracking services
+      --export-mal [path]
+        Export lifetime watch log in MyAnimeList XML format
+      --import-mal <path>
+        Import anime watch history from a MyAnimeList XML file
       --doctor
         Run system diagnostics and dependency check
     Some example usages:
@@ -1071,6 +1075,24 @@ while [ $# -gt 0 ]; do
             _service="${2:-}"
             scrobble_logout "$_service"
             exit 0
+            ;;
+        --export-mal)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/scrobbler.sh" ] && . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
+            _target_file=""
+            case "${2:-}" in
+                -* | "") ;;
+                *) _target_file="$2"; shift ;;
+            esac
+            scrobble_export_mal "$_target_file"
+            exit $?
+            ;;
+        --import-mal)
+            [ $# -lt 2 ] && die "missing file argument for --import-mal!"
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/scrobbler.sh" ] && . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
+            scrobble_import_mal "$2"
+            exit $?
             ;;
         --preview)
             shift

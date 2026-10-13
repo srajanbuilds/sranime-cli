@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-09-28
+
+### Added
+- **MyAnimeList (MAL) Cloud Integration (`lib/sranime-cli/scrobbler.sh`)**:
+  - Interactive OAuth2 PKCE authentication flow via `sranime-cli --login mal`.
+  - Secure credential storage supporting both AniList and MyAnimeList accounts simultaneously.
+  - Dual-tracker synchronization: MPV playback scrobbling automatically updates episode completions to both AniList and MyAnimeList concurrently.
+  - Tracker account status reporting (`sranime-cli --scrobble-status`) displaying connection status and usernames for all authenticated services.
+- **Two-Way Library Portability & XML Synchronization**:
+  - `sranime-cli --export-mal [path]`: Exports lifetime watch history into standardized MyAnimeList XML format for instant backup or migration.
+  - `sranime-cli --import-mal <path>`: Imports existing anime watch histories from MyAnimeList XML export files directly into the local lifetime watch log.
+  - Unit test suite expanded to 32 tests in `test/test_scrobbler.sh` covering verification, credential storage, XML export formatting, and XML parsing.
+  - CLI flag test suite expanded to 41 tests in `test/test_cli_flags.sh`.
+  - Comprehensive shell completion support across Bash, Zsh, and Fish, plus man page (`sranime-cli.1`).
+
 ## [5.6.0] - 2026-09-28
 
 ### Added

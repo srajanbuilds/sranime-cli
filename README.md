@@ -60,11 +60,12 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
   - Chronological history viewer with title and date range filters (`sranime-cli -W "Frieren"`, `sranime-cli -W "2026-09-01..2026-09-30"`).
   - Personal viewing statistics (`sranime-cli --watch-stats`) computing total watch time, top series, and viewing streaks via a pure POSIX Julian Day algorithm.
   - Data portability with structured JSON and CSV exports (`sranime-cli --watch-export json`).
-- **AniList Cloud Tracking & Sync**:
-  - Interactive OAuth2 login via `sranime-cli --login anilist` with credentials securely locked at `0600` permissions.
-  - Automatic 80% playback completion scrobbling via MPV Lua progress hook.
-  - Direct cloud watchlist resumption: `sranime-cli --sync` opens your AniList Currently Watching list and launches the next episode in one click.
-  - Non-interactive watchlist inspection via `sranime-cli --sync-list`.
+- **Dual-Tracker Cloud Synchronization (AniList & MyAnimeList)**:
+  - Interactive OAuth2 PKCE login for AniList and MyAnimeList (`sranime-cli --login anilist`, `sranime-cli --login mal`).
+  - Seamless dual scrobbling: MPV playback hook automatically syncs progress to both AniList and MyAnimeList concurrently.
+  - Direct cloud watchlist resumption: `sranime-cli --sync` opens your cloud Currently Watching list and launches the next episode in one click.
+  - Two-way library portability: Export your lifetime watch log to standard MyAnimeList XML (`--export-mal [file]`) and import existing libraries (`--import-mal <file>`).
+  - Non-interactive watchlist inspection via `sranime-cli --sync-list` and account status via `sranime-cli --scrobble-status`.
 - **High-Speed Chunked Downloads & Batch Engine**:
   - Accelerated 16-connection parallel chunk downloads with `aria2c` (with fallback to `yt-dlp`, `ffmpeg`, and `curl`).
   - Flexible episode range parser supporting single, discrete, and bulk ranges: `-d -e 1-12`, `-d -e 1,3,5-8`, or `-d -e all`.

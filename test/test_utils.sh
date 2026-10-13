@@ -34,7 +34,8 @@ assert_contains() {
 assert_exit_code() {
     _TESTS_RUN=$((_TESTS_RUN + 1))
     _desc="$1"; _expected="$2"; _cmd="$3"
-    eval "$_cmd" >/dev/null 2>&1; _actual=$?
+    _actual=0
+    eval "$_cmd" >/dev/null 2>&1 || _actual=$?
     if [ "$_expected" = "$_actual" ]; then
         _TESTS_PASSED=$((_TESTS_PASSED + 1))
         printf "  \033[1;32mPASS\033[0m %s\n" "$_desc"

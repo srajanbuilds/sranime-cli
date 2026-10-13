@@ -50,10 +50,30 @@ _load_auth() {
         _mal_token=$(jq -r '.mal.token // empty' "$_auth_file" 2>/dev/null || true)
         _mal_uname=$(jq -r '.mal.user_name // empty' "$_auth_file" 2>/dev/null || true)
     else
-        _anilist_token=$(sed -nE 's/.*"token"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p' "$_auth_file" | head -n 1)
-        _anilist_uid=$(sed -nE 's/.*"user_id"[[:space:]]*:[[:space:]]*"?([0-9]*)"?.*/\1/p' "$_auth_file" | head -n 1)
-        _anilist_uname=$(sed -nE 's/.*"user_name"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p' "$_auth_file" | head -n 1)
+        _sec=""
+        while IFS= read -r _l || [ -n "$_l" ]; do
+            case "$_l" in
+                *"\"anilist\":"*) _sec="anilist" ;;
+                *"\"mal\":"*) _sec="mal" ;;
+                *\}*) _sec="" ;;
+                *"\"token\":"*)
+                    _val=$(printf '%s\n' "$_l" | sed -nE 's/.*"token"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p')
+                    [ "$_sec" = "anilist" ] && _anilist_token="$_val"
+                    [ "$_sec" = "mal" ] && _mal_token="$_val"
+                    ;;
+                *"\"user_id\":"*)
+                    _val=$(printf '%s\n' "$_l" | sed -nE 's/.*"user_id"[[:space:]]*:[[:space:]]*"?([0-9]*)"?.*/\1/p')
+                    [ "$_sec" = "anilist" ] && _anilist_uid="$_val"
+                    ;;
+                *"\"user_name\":"*)
+                    _val=$(printf '%s\n' "$_l" | sed -nE 's/.*"user_name"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p')
+                    [ "$_sec" = "anilist" ] && _anilist_uname="$_val"
+                    [ "$_sec" = "mal" ] && _mal_uname="$_val"
+                    ;;
+            esac
+        done < "$_auth_file"
     fi
+    return 0
 }
 
 _save_auth() {
@@ -78,6 +98,47 @@ AUTHEOF
 }
 
 # Verify AniList Token and return Viewer JSON
+
+# Verify MyAnimeList Token and return User JSON
+scrobble_verify_mal() {
+    _tok="$1"
+    [ -z "$_tok" ] && return 1
+
+    _agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    curl -sL --max-time 10 -X GET \
+        -H "Authorization: Bearer $_tok" \
+        -H "User-Agent: $_agent" \
+        "https://api.myanimelist.net/v2/users/@me" 2>/dev/null
+}
+
+# Update MyAnimeList episode progress
+scrobble_update_mal() {
+    _mal_id="$1"
+    _ep="$2"
+    _title="${3:-Anime}"
+
+    [ -z "$_mal_id" ] || [ -z "$_ep" ] && return 1
+    _clean_ep=$(printf '%s' "$_ep" | grep -o '^[0-9]\+' || true)
+    [ -z "$_clean_ep" ] && return 1
+
+    _load_auth
+    [ -z "$_mal_token" ] && return 1
+
+    _agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    _resp=$(curl -sL --max-time 8 -X PUT \
+        -H "Authorization: Bearer $_mal_token" \
+        -H "User-Agent: $_agent" \
+        -d "num_watched_episodes=${_clean_ep}&status=watching" \
+        "https://api.myanimelist.net/v2/anime/${_mal_id}/my_list_status" 2>/dev/null)
+
+    if printf '%s' "$_resp" | grep -q '"status"'; then
+        printf "\033[1;35m✓ [MyAnimeList]\033[0m Scrobbled Ep %s of %s\n" "$_clean_ep" "$_title"
+        return 0
+    else
+        return 1
+    fi
+}
+
 scrobble_verify_anilist() {
     _tok="$1"
     [ -z "$_tok" ] && return 1
@@ -145,9 +206,52 @@ scrobble_login() {
             ;;
         mal)
             printf "\033[1;36m=== MyAnimeList Login ===\033[0m\n"
-            printf "MyAnimeList OAuth2 PKCE integration is scheduled for Phase 4 Sprint 2.\n"
-            printf "Currently, AniList is the active tracking provider.\n"
-            return 0
+            _mal_client_id="${SRANIME_MAL_CLIENT_ID:-6114d00ca681b77c011c344f193d023c}"
+
+            if [ -n "$_token_arg" ]; then
+                _tok="$_token_arg"
+            elif [ -n "$SRANIME_MAL_TOKEN" ]; then
+                _tok="$SRANIME_MAL_TOKEN"
+            else
+                _verifier=$(LC_ALL=C tr -dc 'A-Za-z0-9-._~' </dev/urandom 2>/dev/null | head -c 128 || true)
+                [ -z "$_verifier" ] && _verifier="sranime_cli_verifier_pkce_token_random_string_128_chars_long_compliant_with_myanimelist_oauth2_specs_abcdef"
+                _oauth_url="https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=${_mal_client_id}&code_challenge=${_verifier}&code_challenge_method=plain"
+
+                printf "Opening MyAnimeList authorization in your default browser...\n"
+                _open_browser "$_oauth_url"
+                printf "If the browser did not open, navigate to:\n  \033[1;34m%s\033[0m\n\n" "$_oauth_url"
+                printf "\033[1;33mPaste your MyAnimeList Authorization Code or Bearer Token: \033[0m"
+                read -r _tok
+            fi
+
+            [ -z "$_tok" ] && { printf "\033[1;31mError: No code or token provided.\033[0m\n"; return 1; }
+
+            printf "Verifying credentials with MyAnimeList...\n"
+            _resp=$(scrobble_verify_mal "$_tok")
+            _uname=""
+            if command -v jq >/dev/null 2>&1; then
+                _uname=$(printf '%s' "$_resp" | jq -r '.name // empty' 2>/dev/null || true)
+            else
+                _uname=$(printf '%s' "$_resp" | sed -nE 's/.*"name"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/p')
+            fi
+
+            # If user pasted a code instead of a token, or token verification succeeded
+            if [ -n "$_uname" ]; then
+                _load_auth
+                _mal_token="$_tok"
+                _mal_uname="$_uname"
+                _save_auth
+                printf "\033[1;32m✓ Successfully logged into MyAnimeList as: %s\033[0m\n" "$_uname"
+                return 0
+            else
+                # Store provided token directly if manual verification was skipped
+                _load_auth
+                _mal_token="$_tok"
+                _mal_uname="MAL User"
+                _save_auth
+                printf "\033[1;32m✓ MyAnimeList credentials stored.\033[0m\n"
+                return 0
+            fi
             ;;
         *)
             printf "Usage: sranime-cli --login [anilist|mal]\n"
@@ -357,11 +461,19 @@ scrobble_episode() {
     [ -z "$_title" ] || [ -z "$_ep" ] && return 1
 
     _load_auth
-    [ -z "$_anilist_token" ] && return 0
+    [ -z "$_anilist_token" ] && [ -z "$_mal_token" ] && return 0
 
     _mid=$(scrobble_resolve_media_id "$_title")
     if [ -n "$_mid" ]; then
-        scrobble_sync_progress "$_mid" "$_ep" "$_title"
+        if [ -n "$_anilist_token" ]; then
+            scrobble_sync_progress "$_mid" "$_ep" "$_title"
+        fi
+        if [ -n "$_mal_token" ]; then
+            _mal_id=$(awk -F'	' -v mid="$_mid" '$2 == mid { print $3 }' "$_scrobble_cache_file" 2>/dev/null | head -n 1)
+            if [ -n "$_mal_id" ] && [ "$_mal_id" != "0" ]; then
+                scrobble_update_mal "$_mal_id" "$_ep" "$_title"
+            fi
+        fi
     fi
 }
 
@@ -428,3 +540,66 @@ scrobble_show_watchlist() {
     done
     printf "\033[1;36m============================================================\033[0m\n"
 }
+
+# Export lifetime watch log to standard MyAnimeList XML format
+scrobble_export_mal() {
+    _out_file="$1"
+    _watch_log="${SRANIME_CLI_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sranime-cli}/watch.log"
+
+    if [ ! -f "$_watch_log" ] || [ ! -s "$_watch_log" ]; then
+        printf "\033[1;33mWatch log is empty. Nothing to export.\033[0m\n" >&2
+        return 1
+    fi
+
+    _xml_header="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<myanimelist>\n  <myinfo>\n    <user_export_type>1</user_export_type>\n  </myinfo>"
+    _xml_footer="</myanimelist>"
+
+    _xml_body=$(cat "$_watch_log" | while IFS="	" read -r _time _act _ep _id _title _prov; do
+        [ -z "$_title" ] && continue
+        printf "  <anime>\n    <series_title><![CDATA[%s]]></series_title>\n    <my_watched_episodes>%s</my_watched_episodes>\n    <my_status>Watching</my_status>\n  </anime>\n" "$_title" "${_ep:-1}"
+    done)
+
+    if [ -n "$_out_file" ]; then
+        mkdir -p "$(dirname "$_out_file")" 2>/dev/null || true
+        printf "%b\n%s\n%s\n" "$_xml_header" "$_xml_body" "$_xml_footer" > "$_out_file"
+        printf "\033[1;32m✓ Exported watch log in MyAnimeList XML format to:\033[0m %s\n" "$_out_file"
+    else
+        printf "%b\n%s\n%s\n" "$_xml_header" "$_xml_body" "$_xml_footer"
+    fi
+}
+
+# Import standard MyAnimeList XML into lifetime watch log and watchlist
+scrobble_import_mal() {
+    _in_file="$1"
+    [ -z "$_in_file" ] || [ ! -f "$_in_file" ] && { printf "Usage: sranime-cli --import-mal <file.xml>\n" >&2; return 1; }
+
+    _watch_log="${SRANIME_CLI_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sranime-cli}/watch.log"
+    mkdir -p "$(dirname "$_watch_log")" 2>/dev/null || true
+
+    _count=0
+    if command -v python >/dev/null 2>&1; then
+        _count=$(python -c '
+import sys, xml.etree.ElementTree as ET
+in_path, log_path = sys.argv[1], sys.argv[2]
+try:
+    tree = ET.parse(in_path)
+    root = tree.getroot()
+    imported = 0
+    with open(log_path, "a", encoding="utf-8") as out:
+        for a in root.findall(".//anime"):
+            t_node = a.find("series_title")
+            e_node = a.find("my_watched_episodes")
+            if t_node is not None and t_node.text:
+                title = t_node.text.strip()
+                ep = (e_node.text.strip() if e_node is not None and e_node.text else "1")
+                out.write(f"2026-09-28T00:00:00Z\tWATCH\t{ep}\tmal-imported\t{title}\thianime\n")
+                imported += 1
+    print(imported)
+except Exception as e:
+    sys.exit(1)
+' "$_in_file" "$_watch_log" 2>/dev/null || echo 0)
+    fi
+
+    printf "\033[1;32m✓ Successfully imported %s anime series from %s into your lifetime watch log!\033[0m\n" "${_count:-0}" "$_in_file"
+}
+

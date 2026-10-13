@@ -39,6 +39,8 @@ assert_contains "Help contains --seasonal flag" "$_help" "--seasonal"
 assert_contains "Help contains --trending flag" "$_help" "--trending"
 assert_contains "Help contains --calendar flag" "$_help" "--calendar"
 assert_contains "Help contains --similar flag" "$_help" "--similar"
+assert_contains "Help contains --export-mal flag" "$_help" "--export-mal"
+assert_contains "Help contains --import-mal flag" "$_help" "--import-mal"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"
