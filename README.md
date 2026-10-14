@@ -37,6 +37,8 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
 ## Table of Contents
 
 - [Features](#features)
+- [CLI Options Reference](#cli-options-reference)
+- [Usage Examples](#usage-examples)
 - [Configuration](#configuration)
 - [Fixing errors](#fixing-errors)
 - [Install](#install)
@@ -76,7 +78,152 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
 - **Social & Multiplayer Watch Parties**:
   - Native Discord IPC Rich Presence client (`--discord`, `--no-discord`) displaying live episode progress and player art.
   - Synchronized watch parties with friends via Turnkey Syncplay integration: `sranime-cli --room FridayNight "Sousou no Frieren"`.
+- **Continuous Autoplay Binging & Smart Resumption**:
+  - Seamless continuous binge-watching (`-A, --autoplay`, `--autoplay-limit [count]`) automatically streaming subsequent episodes with countdown intermission.
+  - Exact timestamp-precision resumption (`-R, --resume`) saving playback position down to the second via an MPV Lua observer.
+  - Arbitrary timestamp seek on start (`--start-time MM:SS`) and active checkpoint inspection (`--show-checkpoints`, `--clear-checkpoints`).
+- **Intelligent Discovery Engine**:
+  - Zero-query seasonal anime browser (`--seasonal [season] [year]`) and trending releases (`--trending`).
+  - Airing calendar with live countdown timers (`--calendar / --schedule [hours]`).
+  - Graph-based recommendations engine (`--similar [title]`) querying AniList community votes.
 - **Cross-Platform & POSIX Compliant**: Works seamlessly on Linux, macOS, and Windows (PowerShell/CMD/Git Bash), with zero mandatory runtime overhead.
+
+## CLI Options Reference
+
+| Flag / Option | Arguments | Default | Description |
+| :--- | :--- | :--- | :--- |
+| **Search & Playback** | | | |
+| `-c, --continue` | — | — | Continue watching from the last played episode in history |
+| `-A, --autoplay` | — | Disabled | Automatically stream subsequent episodes continuously |
+| `--autoplay-limit` | `<count>` | Unlimited | Limit number of consecutive episodes in autoplay binge mode |
+| `-R, --resume` | — | Disabled | Resume playback from the exact saved timestamp checkpoint |
+| `--start-time` | `<time>` | 0 | Seek to timestamp (`MM:SS`, `HH:MM:SS`, or seconds) on start |
+| `--show-checkpoints`| — | — | Display table of in-progress anime titles and timestamps |
+| `--clear-checkpoints`| — | — | Clear all stored playback timestamp checkpoints |
+| `-e, --episode` | `<num>` | — | Select a specific episode number to stream or download |
+| `-r, --range` | `<range>` | — | Select an episode range (e.g. `1-12`, `1,3,5`, `all`) |
+| `-S, --select-nth` | `<index>` | — | Auto-select nth search result directly without interactive menu |
+| `-p, --provider` | `<name>` | `hianime` | Preferred stream provider (`hianime`, `allanime`, `gogo`) |
+| `--list-providers` | — | — | List all available stream extraction providers |
+| `-q, --quality` | `<quality>`| `best` | Video quality (`best`, `1080p`, `720p`, `480p`, `360p`, `worst`) |
+| `--dub` | — | `sub` | Prefer English dubbed stream audio when available |
+| `-v, --vlc` | — | `mpv` | Use VLC media player instead of default MPV |
+| `--skip` | — | Disabled | Use `ani-skip` to automatically skip anime opening intros |
+| `--no-detach` | — | Detached | Keep player attached to terminal (useful for terminal MPV) |
+| `--exit-after-play` | — | Disabled | Exit player and return player exit code |
+| **Discovery & Recommendations** | | | |
+| `--seasonal` | `[season] [yr]` | Current | Browse popular anime of the current or specified broadcast season |
+| `--trending` | — | — | Browse top trending anime releases right now |
+| `--calendar, --schedule` | `[hours]` | 24 | Display upcoming broadcast calendar with live countdowns |
+| `--similar` | `[title]` | — | Discover community recommendations based on an anime series |
+| **Cloud Trackers & Library** | | | |
+| `--login` | `[anilist\|mal]`| `anilist` | Authenticate with AniList or MyAnimeList cloud trackers |
+| `--scrobble-status` | — | — | Display authentication and connection status for linked accounts |
+| `--logout` | `[anilist\|mal]`| All | Log out and clear stored credentials for tracking services |
+| `--sync` | — | — | Interactive selection menu populated with your AniList Currently Watching |
+| `--sync-list` | — | — | Display your Currently Watching watchlist with progress and exit |
+| `--no-scrobble` | — | Enabled | Disable automatic episode progress scrobbling for this session |
+| `--export-mal` | `[path]` | Stdout | Export lifetime watch history in standard MyAnimeList XML format |
+| `--import-mal` | `<file.xml>` | — | Import watch history from MyAnimeList XML file into watch journal |
+| **Media Server & Downloads** | | | |
+| `-d, --download` | — | Stream | Download video stream to disk instead of launching player |
+| `--download-dir` | `<path>` | `~/Downloads`| Set destination directory for downloaded anime files |
+| `--nfo` | — | Disabled | Generate Kodi/Jellyfin/Plex `.nfo` metadata and download artwork |
+| `--save-subs` | — | Disabled | Concurrently extract and save external `.vtt`/`.srt` subtitle sidecars |
+| `--queue` | — | Disabled | Enqueue episode download asynchronously to background queue |
+| `--queue-status` | — | — | Display dashboard table of queued, active, and completed downloads |
+| `--queue-start` | — | — | Start background download queue daemon worker |
+| `--queue-pause` | — | — | Pause background download queue processing |
+| `--queue-resume` | — | — | Resume background download queue processing |
+| `--queue-clear` | `[completed\|all]` | `completed` | Purge finished or all items from download queue |
+| **History, Journal & Social** | | | |
+| `-W, --watch-log` | `[filter]` | All | Display chronological watch log (filter by title or date range) |
+| `--watch-stats` | — | — | Display lifetime viewing analytics, hours watched, and streaks |
+| `--watch-export` | `[json\|csv]` | `json` | Export lifetime watch log to structured JSON or CSV |
+| `--clear-watch-log`| — | — | Clear the lifetime watch log journal |
+| `--show-history` | — | — | Display recent watch history |
+| `-D, --clear-history` | — | — | Clear recent watch history |
+| `-s, --syncplay` | — | Disabled | Launch Syncplay watch party to synchronize playback with friends |
+| `--room` | `<name>` | `WatchParty` | Set room name for Syncplay watch party |
+| `--discord` | — | Enabled | Enable native Discord Rich Presence IPC integration |
+| `--no-discord` | — | — | Disable Discord Rich Presence IPC integration |
+| **Configuration & Diagnostics** | | | |
+| `--edit-config` | — | — | Open configuration file in default `$EDITOR` |
+| `--dump-config` | — | — | Print active configuration values and exit |
+| `--validate-config`| — | — | Validate syntax of user configuration file |
+| `--doctor` | — | — | Run comprehensive system diagnostics and dependency check |
+| `-V, --version` | — | — | Print script version and exit |
+| `-h, --help` | — | — | Print help options and exit |
+
+## Usage Examples
+
+### 1. Fast Streaming & Binge Watching
+```sh
+# Search and stream with interactive fzf metadata cards
+sranime-cli "Sousou no Frieren"
+
+# Binge watch continuously from episode 1 to 5 with autoplay
+sranime-cli -A --autoplay-limit 5 -e 1 "Bocchi the Rock!"
+
+# Resume playback from the exact second you left off
+sranime-cli -R "Solo Leveling"
+
+# Start at an exact timestamp (MM:SS)
+sranime-cli --start-time 14:30 -e 4 "Chainsaw Man"
+```
+
+### 2. Intelligent Discovery & Schedules
+```sh
+# Browse top popular anime airing this current season
+sranime-cli --seasonal
+
+# Browse upcoming schedule with live countdown timers
+sranime-cli --calendar 48
+
+# Get community recommendations based on an anime series
+sranime-cli --similar "Steins;Gate"
+```
+
+### 3. Cloud Tracking & Portability
+```sh
+# Authenticate with AniList and MyAnimeList
+sranime-cli --login anilist
+sranime-cli --login mal
+
+# Check connected accounts status
+sranime-cli --scrobble-status
+
+# Export local watch journal to MyAnimeList XML backup
+sranime-cli --export-mal ~/Documents/my_anime_library.xml
+
+# Import existing MyAnimeList XML backup into local watch journal
+sranime-cli --import-mal ~/Downloads/mal_export.xml
+```
+
+### 4. Media Server Downloads & Background Queue
+```sh
+# Download batch episodes with Jellyfin/Plex .nfo metadata and artwork
+sranime-cli -d -e 1-12 --nfo --save-subs "Dungeon Meshi"
+
+# Enqueue an episode to the background download queue
+sranime-cli -d -e 14 --queue "Frieren"
+
+# Check background queue status and start the daemon worker
+sranime-cli --queue-status
+sranime-cli --queue-start
+```
+
+### 5. Viewing Journal & Analytics
+```sh
+# Inspect lifetime watch statistics and viewing streaks
+sranime-cli --watch-stats
+
+# Filter watch history by date range
+sranime-cli -W "2026-09-01..2026-09-30"
+
+# Export watch history to JSON
+sranime-cli --watch-export json > watch_history.json
+```
 
 ## Configuration
 
