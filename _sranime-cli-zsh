@@ -75,6 +75,14 @@ _sranime_cli() {
         '--logout[Log out from cloud tracking service]:service:(($logins))' \
         '--export-mal[Export watch log in MyAnimeList XML format]:file:_files' \
         '--import-mal[Import watch history from MyAnimeList XML file]:file:_files' \
+        '--nfo[Generate Jellyfin/Plex/Kodi .nfo metadata and download artwork]' \
+        '--save-subs[Extract and save external subtitle sidecars (.vtt/.srt)]' \
+        '--queue[Enqueue episode for background downloading]' \
+        '--queue-status[Display background download queue status]' \
+        '--queue-start[Start background download queue daemon worker]' \
+        '--queue-pause[Pause background download queue]' \
+        '--queue-resume[Resume background download queue]' \
+        '--queue-clear[Clear items from download queue]:mode:(all completed)' \
         '--scrobble-status[Display status of linked tracking accounts]' \
         '--sync[Open interactive selection menu with AniList Currently Watching]' \
         '--sync-list[Display AniList Currently Watching list and exit]' \

@@ -97,6 +97,30 @@ Export lifetime watch log history in standard MyAnimeList XML format.
 \fB\--import-mal\fR \fI\,<path>\/\fR
 Import anime watch history from an exported MyAnimeList XML file into the local lifetime watch log.
 .TP
+\fB\--nfo\fR
+Generate Jellyfin, Plex & Kodi .nfo metadata files and download cover/backdrop artwork alongside downloaded episodes.
+.TP
+\fB\--save-subs\fR
+Extract and save external subtitle sidecars (.vtt/.srt) alongside downloaded video files.
+.TP
+\fB\--queue\fR
+Enqueue episode(s) into the background download queue instead of downloading immediately.
+.TP
+\fB\--queue-status\fR
+Display a formatted dashboard table showing the status of all queued and completed downloads.
+.TP
+\fB\--queue-start\fR
+Launch or trigger the background download queue worker daemon.
+.TP
+\fB\--queue-pause\fR
+Pause execution of background download queue workers.
+.TP
+\fB\--queue-resume\fR
+Resume execution of background download queue workers.
+.TP
+\fB\--queue-clear\fR [\fIcompleted\fR|\fIall\fR]
+Remove completed or all entries from the background download queue.
+.TP
 \fB\--sync\fR
 Open interactive selection menu populated with shows from your AniList Currently Watching list.
 .TP

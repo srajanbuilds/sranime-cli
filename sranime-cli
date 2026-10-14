@@ -211,6 +211,22 @@ help_info() {
         Export lifetime watch log in MyAnimeList XML format
       --import-mal <path>
         Import anime watch history from a MyAnimeList XML file
+      --nfo
+        Generate Jellyfin, Plex & Kodi .nfo metadata and download artwork
+      --save-subs
+        Extract and save external subtitle sidecars (.vtt/.srt)
+      --queue
+        Enqueue episode(s) for background downloading instead of downloading now
+      --queue-status
+        Display background download queue status
+      --queue-start
+        Start background download queue daemon worker
+      --queue-pause
+        Pause background download queue
+      --queue-resume
+        Resume background download queue
+      --queue-clear [completed|all]
+        Clear items from background download queue (default: completed)
       --doctor
         Run system diagnostics and dependency check
     Some example usages:
@@ -1093,6 +1109,50 @@ while [ $# -gt 0 ]; do
             [ -f "$_lib_dir/scrobbler.sh" ] && . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
             scrobble_import_mal "$2"
             exit $?
+            ;;
+        --nfo)
+            enable_nfo=1
+            ;;
+        --save-subs)
+            save_subs=1
+            ;;
+        --queue)
+            enqueue_only=1
+            ;;
+        --queue-status)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/queue.sh" ] && . "$_lib_dir/queue.sh" 2>/dev/null || true
+            queue_list
+            exit 0
+            ;;
+        --queue-start)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/queue.sh" ] && . "$_lib_dir/queue.sh" 2>/dev/null || true
+            queue_run_daemon
+            exit 0
+            ;;
+        --queue-pause)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/queue.sh" ] && . "$_lib_dir/queue.sh" 2>/dev/null || true
+            queue_pause
+            exit 0
+            ;;
+        --queue-resume)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/queue.sh" ] && . "$_lib_dir/queue.sh" 2>/dev/null || true
+            queue_resume
+            exit 0
+            ;;
+        --queue-clear)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/queue.sh" ] && . "$_lib_dir/queue.sh" 2>/dev/null || true
+            _mode="${2:-completed}"
+            case "$_mode" in
+                all|completed) shift ;;
+                *) _mode="completed" ;;
+            esac
+            queue_clear "$_mode"
+            exit 0
             ;;
         --preview)
             shift

@@ -50,6 +50,14 @@ complete -c sranime-cli -l scrobble-status -d "Display status of linked tracking
 complete -c sranime-cli -l logout -d "Log out from cloud tracking services" -x -a "anilist mal"
 complete -c sranime-cli -l export-mal -d "Export watch log in MyAnimeList XML format" -r
 complete -c sranime-cli -l import-mal -d "Import watch history from MyAnimeList XML file" -r
+complete -c sranime-cli -l nfo -d "Generate Jellyfin/Plex/Kodi .nfo metadata and artwork"
+complete -c sranime-cli -l save-subs -d "Extract and save external subtitle sidecars"
+complete -c sranime-cli -l queue -d "Enqueue episode for background downloading"
+complete -c sranime-cli -l queue-status -d "Display background download queue status"
+complete -c sranime-cli -l queue-start -d "Start background download queue daemon worker"
+complete -c sranime-cli -l queue-pause -d "Pause background download queue"
+complete -c sranime-cli -l queue-resume -d "Resume background download queue"
+complete -c sranime-cli -l queue-clear -d "Clear items from download queue" -x -a "completed all"
 complete -c sranime-cli -l sync -d "Open interactive menu with your AniList Currently Watching shows"
 complete -c sranime-cli -l sync-list -d "Display your AniList Currently Watching watchlist and exit"
 complete -c sranime-cli -l no-scrobble -d "Disable automatic episode tracking for this session"

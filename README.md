@@ -66,10 +66,13 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
   - Direct cloud watchlist resumption: `sranime-cli --sync` opens your cloud Currently Watching list and launches the next episode in one click.
   - Two-way library portability: Export your lifetime watch log to standard MyAnimeList XML (`--export-mal [file]`) and import existing libraries (`--import-mal <file>`).
   - Non-interactive watchlist inspection via `sranime-cli --sync-list` and account status via `sranime-cli --scrobble-status`.
-- **High-Speed Chunked Downloads & Batch Engine**:
+- **High-Speed Chunked Downloads, Media Server Bridge & Queue Daemon**:
   - Accelerated 16-connection parallel chunk downloads with `aria2c` (with fallback to `yt-dlp`, `ffmpeg`, and `curl`).
   - Flexible episode range parser supporting single, discrete, and bulk ranges: `-d -e 1-12`, `-d -e 1,3,5-8`, or `-d -e all`.
   - Plex and Jellyfin standardized season folder organization (`${download_dir}/${anime}/Season 01/...`).
+  - Automated Jellyfin, Plex & Kodi `.nfo` metadata generation (`--nfo`) creating `tvshow.nfo` and episode `.nfo` files with full synopsis, studio, genres, and artwork (`poster.jpg`, `fanart.jpg`).
+  - External subtitle sidecar extraction (`--save-subs`) preserving `.vtt`/`.srt` files matching video filenames.
+  - Asynchronous background download queue daemon (`--queue`, `--queue-status`, `--queue-start`, `--queue-pause`, `--queue-resume`, `--queue-clear`).
 - **Social & Multiplayer Watch Parties**:
   - Native Discord IPC Rich Presence client (`--discord`, `--no-discord`) displaying live episode progress and player art.
   - Synchronized watch parties with friends via Turnkey Syncplay integration: `sranime-cli --room FridayNight "Sousou no Frieren"`.

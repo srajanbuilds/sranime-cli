@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-09-28
+
+### Added
+- **Media Server Bridge & Metadata Engine (`lib/sranime-cli/nfo.sh`)**:
+  - `--nfo` flag: Automatically generates standard Jellyfin, Plex, and Kodi XML metadata files during downloads.
+  - Generates `tvshow.nfo` in the anime series directory with title, original Japanese title, synopsis, studio, broadcast year, genres, rating, and AniList/MyAnimeList unique IDs.
+  - Generates episode `.nfo` files (`${anime} - S01E${ep} [${quality}].nfo`) alongside video files.
+  - Automated artwork fetcher downloading `poster.jpg` and `fanart.jpg` into the series directory.
+  - Multi-language subtitle sidecar extraction (`--save-subs`): Downloads external `.vtt`/`.srt` subtitle streams named identically to the video file according to Plex/Jellyfin naming conventions.
+  - Dedicated unit test suite (`test/test_nfo.sh`) with 19 automated tests.
+- **Asynchronous Background Download Queue Daemon (`lib/sranime-cli/queue.sh`)**:
+  - `--queue` flag: Enqueues episode downloads asynchronously into a persistent TSV queue (`$XDG_STATE_HOME/sranime-cli/queue.tsv`) without locking the interactive terminal.
+  - `--queue-status`: Displays a clean ANSI dashboard table of queued, active, and completed downloads with status badges.
+  - `--queue-start`: Launches the background worker daemon to process queued downloads sequentially.
+  - `--queue-pause` & `--queue-resume`: Control background worker execution.
+  - `--queue-clear [completed|all]`: Purges finished or all queue entries.
+  - Dedicated unit test suite (`test/test_queue.sh`) with 20 automated tests.
+  - Master test suite expanded to 11 suites and 220 automated tests passing with zero failures.
+
 ## [5.7.0] - 2026-09-28
 
 ### Added

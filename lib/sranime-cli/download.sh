@@ -155,6 +155,11 @@ download_stream() {
 
     if [ "$_status" -eq 0 ] && [ -s "$_target_file" ]; then
         printf "\033[1;32m✓ Download completed successfully:\033[0m %s\n" "$_target_file"
+        if [ "${enable_nfo:-0}" = "1" ]; then
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/nfo.sh" ] && . "$_lib_dir/nfo.sh" 2>/dev/null || true
+            nfo_enrich_and_generate "$_target_file" "$_title" "${ep_no:-1}" "${season_no:-1}" "${poster_url:-}" "$_sub_url" 2>/dev/null || true
+        fi
         if command -v notify_download_complete >/dev/null 2>&1; then
             notify_download_complete "$_title" "${ep_no:-1}" "$_out_dir"
         fi
