@@ -42,8 +42,9 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
 - [Configuration](#configuration)
 - [Fixing errors](#fixing-errors)
 - [Install](#install)
-  - [Tier 1: Linux, Mac, Android](#tier-1-support-linux-mac-android)
-  - [Tier 2: Windows, WSL, iOS, Steam Deck, FreeBSD, Ubuntu Touch](#tier-2-support-windows-wsl-ios-steam-deck-freebsd-ubuntu-touch)
+  - [⚡ Quick Install (1-Line)](#-quick-install-1-line)
+  - [📦 Prerequisites & Installing Dependencies](#-prerequisites--installing-dependencies)
+  - [Package Managers & Native Packages](#package-managers--native-packages)
   - [From Source](#installing-from-source)
 - [Uninstall](#uninstall)
 - [Dependencies](#dependencies)
@@ -272,17 +273,154 @@ If after this the issue persists then open an issue.
 
 ## Install
 
-### Quick Install (Linux / macOS)
+### ⚡ Quick Install (1-Line)
 
-Install or update `sranime-cli` with one command:
+Get `sranime-cli` up and running in seconds with a single command:
 
+#### Linux, macOS & Android (Termux)
 ```sh
 curl -fsSL https://raw.githubusercontent.com/srajanbuilds/sranime-cli/main/install.sh | sh
 ```
+*Downloads and links `sranime-cli` and all modular engines into `/usr/local/bin` (or `~/.local/bin` / Termux `$PREFIX/bin`).*
+
+#### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/srajanbuilds/sranime-cli/main/install.ps1 | iex
+```
+*Downloads `sranime-cli` to `%USERPROFILE%\.sranime-cli`, generates command shims, and automatically adds it to your User `$PATH`.*
+
+---
+
+### 📦 Prerequisites & Installing Dependencies
+
+`sranime-cli` is lightweight and modular. Install the required and recommended tools for your operating system using one of the quick copy-paste commands below:
+
+| Dependency | Status | Purpose |
+| :--- | :---: | :--- |
+| **`curl`** | **Required** | Fast HTTP/HTTPS scraping and API queries |
+| **`mpv`** (or `iina`) | **Required** | Video playback engine with Lua scrobbling & checkpoints |
+| **`fzf`** | **Required** | Interactive fuzzy search menu & dual-column preview pane |
+| **`aria2`** (`aria2c`) | **Recommended** | Accelerated 16-connection parallel chunk downloading |
+| **`chafa`** | **Recommended** | High-definition ANSI/Sixel anime poster art in terminal cards |
+| **`yt-dlp`** | **Recommended** | Stream extractor and HLS media segment fallback |
+| **`ffmpeg`** | Optional | Media stream muxing and audio conversion fallback |
+| **`ani-skip`** | Optional | Automatic anime opening & ending intro skipping |
+
+#### Install All Dependencies by Operating System
+
+<details open><summary><b>Ubuntu / Debian / Linux Mint / Pop!_OS</b></summary>
+
+```sh
+sudo apt update && sudo apt install -y curl mpv fzf aria2 chafa yt-dlp
+```
+</details>
+
+<details><summary><b>Arch Linux / Manjaro / EndeavourOS</b></summary>
+
+```sh
+sudo pacman -S --needed curl mpv fzf aria2 chafa yt-dlp
+```
+</details>
+
+<details><summary><b>Fedora / RHEL</b></summary>
+
+```sh
+sudo dnf install -y curl mpv fzf aria2 chafa yt-dlp
+```
+*(Note: If `mpv` is not in Fedora's base repos, enable RPM Fusion: `sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm`)*
+</details>
+
+<details><summary><b>openSUSE (Tumbleweed / Leap)</b></summary>
+
+```sh
+sudo zypper install -y curl mpv fzf aria2 chafa yt-dlp
+```
+</details>
+
+<details><summary><b>Void Linux</b></summary>
+
+```sh
+sudo xbps-install -Sy curl mpv fzf aria2 chafa yt-dlp
+```
+</details>
+
+<details><summary><b>Alpine Linux</b></summary>
+
+```sh
+sudo apk add curl mpv fzf aria2 chafa yt-dlp
+```
+</details>
+
+<details open><summary><b>macOS (Homebrew)</b></summary>
+
+```sh
+# Using mpv
+brew install curl mpv fzf aria2 chafa yt-dlp
+
+# Or using IINA (native macOS player):
+brew install curl fzf aria2 chafa yt-dlp && brew install --cask iina
+```
+</details>
+
+<details open><summary><b>Windows</b></summary>
+
+Open **PowerShell** and choose your preferred package manager:
+
+**Option 1: Scoop (Recommended)**
+```powershell
+scoop install git mpv fzf aria2 chafa yt-dlp
+```
+
+**Option 2: Windows Package Manager (winget)**
+```powershell
+winget install Git.Git mpv.net junegunn.fzf aria2.aria2 yt-dlp.yt-dlp
+```
+
+**Option 3: Chocolatey**
+```powershell
+choco install git mpv fzf aria2 yt-dlp
+```
+*Note: Git for Windows provides `bash.exe`, `curl`, `grep`, and `sed` which `sranime-cli` uses seamlessly.*
+</details>
+
+<details><summary><b>Android (Termux)</b></summary>
+
+```sh
+pkg up -y && pkg install -y curl mpv fzf aria2 chafa yt-dlp
+# Required on Android 14+
+pkg install termux-am
+```
+</details>
+
+<details><summary><b>Steam Deck (SteamOS Desktop Mode)</b></summary>
+
+Switch to Desktop Mode and open `Konsole`:
+```sh
+# Flatpak MPV player
+flatpak install -y flathub io.mpv.Mpv
+
+# CLI tools
+curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ~/.local/bin/yt-dlp && chmod +x ~/.local/bin/yt-dlp
+```
+</details>
+
+<details><summary><b>FreeBSD</b></summary>
+
+```sh
+sudo pkg install -y curl mpv fzf aria2 chafa yt-dlp
+```
+</details>
+
+> [!TIP]
+> **Verify Your Setup:** Run `sranime-cli --doctor` anytime to automatically verify all installed dependencies and player integrations.
+
+---
+
+### Package Managers & Native Packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/sranime-cli.svg?minversion=4.14)](https://repology.org/project/sranime-cli/versions)
 
-### Tier 1 Support: Linux, Mac, Android
+#### Tier 1 Support: Linux, Mac, Android
 
 *These Platforms have rock solid support and are used by maintainers and large parts of the userbase.*
 
@@ -740,16 +878,21 @@ apk del grep sed curl fzf git ffmpeg ncurses
 
 ## Dependencies
 
-- grep
-- sed
-- curl
-- mpv - Video Player
-- iina - mpv replacement for MacOS
-- yt-dlp - m3u8 Downloader
-- ffmpeg - m3u8 Downloader (fallback)
-- fzf - User interface
-- ani-skip (optional, for auto-skipping anime intros)
-- patch - Self updating
+> [!NOTE]
+> For quick 1-line copy-paste commands to install all dependencies for your specific OS (Ubuntu, Arch, Fedora, macOS, Windows, Android, etc.), see [📦 Prerequisites & Installing Dependencies](#-prerequisites--installing-dependencies).
+
+| Component | Status | Description |
+| :--- | :---: | :--- |
+| **`curl`** | **Required** | High-performance HTTP client for provider scraping and API requests |
+| **`mpv`** | **Required** | Video player engine with Lua scripting hooks (or `iina` on macOS) |
+| **`fzf`** | **Required** | Interactive fuzzy finder menu and dual-column preview UI |
+| **`sed` / `grep` / `awk`** | **Required** | Core POSIX stream parsing utilities (standard on Unix & Git Bash) |
+| **`aria2`** (`aria2c`) | **Recommended** | High-speed 16-connection parallel chunk downloader |
+| **`chafa`** | **Recommended** | Terminal image renderer for inline cover art cards |
+| **`yt-dlp`** | **Recommended** | Stream extractor and HLS fallback downloader |
+| **`ffmpeg`** | Optional | Stream audio/video muxing and conversion fallback |
+| **`ani-skip`** | Optional | Automatic anime opening & ending intro skipping (mpv only) |
+| **`patch`** | Optional | In-place self-updater engine (`sranime-cli -U`) |
 
 ### ani-skip (External)
 
