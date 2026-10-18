@@ -63,7 +63,7 @@ chmod +x "${BINDIR}/sranime-cli"
 
 # Fetch modules
 mkdir -p "${LIBDIR}" "${LIBDIR}/providers"
-for _mod in config.sh discord.sh discovery.sh download.sh network.sh nfo.sh notify.sh playback.sh preview.sh providers.sh queue.sh scrobbler.sh syncplay.sh ui.sh utils.sh watchlist.sh watchlog.sh; do
+for _mod in cast.sh config.sh discord.sh discovery.sh download.sh network.sh nfo.sh notify.sh playback.sh preview.sh providers.sh queue.sh scrobbler.sh subtitles.sh syncplay.sh ui.sh utils.sh watchlist.sh watchlog.sh webserver.sh; do
     curl -fsSL "${REPO_URL}/lib/sranime-cli/${_mod}" -o "${LIBDIR}/${_mod}" 2>/dev/null || true
 done
 for _prov in allanime.sh gogo.sh hianime.sh; do

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version_number="5.8.0"
+version_number="6.0.0"
 
 # Module directory resolution
 _bin_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)"
@@ -227,6 +227,20 @@ help_info() {
         Resume background download queue
       --queue-clear [completed|all]
         Clear items from background download queue (default: completed)
+      --sub-lang, -sl <lang>
+        Preferred subtitle language (e.g. es, fr, de, it, pt, ar, en)
+      --audio-lang, -al <lang>
+        Preferred audio language (e.g. ja, en, es)
+      --cast [device]
+        Cast episode to Smart TV or Chromecast via catt
+      --cast-devices
+        Scan local network for Cast devices and exit
+      --web [port]
+        Launch local LAN web companion microserver (default: 7777)
+      --web-stop
+        Stop background web companion microserver
+      --web-status
+        Display status of web companion microserver
       --doctor
         Run system diagnostics and dependency check
     Some example usages:
@@ -456,8 +470,13 @@ hianime_m3u8() {
     _json="$(deobfuscate_blob "$_blob")"
     _m3u8_master="$(printf "%s" "$_json" | sed -nE 's|.*"src":"([^"]*\.m3u8[^"]*)".*|\1|p')"
     [ -z "$_m3u8_master" ] && return 1
-    # several languages can be listed, the site marks the english track as default
-    sub_link="$(printf "%s" "$_json" | sed 's|.*"subtitles":\[||; s|\].*||; s|},{|}\n{|g' | grep -m 1 '"default":true' | sed -nE 's|.*"src":"([^"]*)".*|\1|p')"
+    # several languages can be listed, extract preferred language or fallback
+    _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+    if [ -f "$_lib_dir/subtitles.sh" ]; then
+        . "$_lib_dir/subtitles.sh" 2>/dev/null || true
+        sub_link=$(subtitles_extract_from_json "$_json" "${sub_lang:-en}")
+    fi
+    [ -z "$sub_link" ] && sub_link="$(printf "%s" "$_json" | sed 's|.*"subtitles":\[||; s|\].*||; s|},{|}\n{|g' | grep -m 1 '"default":true' | sed -nE 's|.*"src":"([^"]*)".*|\1|p')"
     # quality variants are relative to the master playlist
     links="$(hianime_curl "$_m3u8_master" -e "$refr" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
     [ -n "$links" ]
@@ -612,6 +631,18 @@ play_episode() {
     wait
     [ "$player_function" != "debug" ] && [ "$player_function" != "download" ] && info "Opening ${anime_title} (Episode ${ep_no})..."
     # shellcheck disable=SC2086
+    if [ -n "$cast_device" ] || [ "$player_function" = "cast" ] || [ "$player_function" = "catt" ]; then
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        if [ -f "$_lib_dir/cast.sh" ]; then
+            . "$_lib_dir/cast.sh" 2>/dev/null || true
+            cast_stream "$video_link" "$cast_device" "$sub_link" "${anime_title} Episode ${ep_no}"
+            replay="$video_link"
+            unset video_link
+            update_history
+            return 0
+        fi
+    fi
+
     case "$player_function" in
         debug) printf "All links:\n%s\nSelected link:\n%s\nSubtitles:\n%s\n" "$links" "$video_link" "$sub_link" ;;
         android_mpv) android_mpv ;;
@@ -843,7 +874,10 @@ auto_resume="${SRANIME_CLI_RESUME:-0}"
 start_time="${SRANIME_CLI_START_TIME:-}"
 seasonal_name=""
 seasonal_year=""
-similar_target=""  
+similar_target=""
+sub_lang="${SRANIME_CLI_SUB_LANG:-${sub_lang:-en}}"
+audio_lang="${SRANIME_CLI_AUDIO_LANG:-${audio_lang:-ja}}"
+cast_device="${SRANIME_CLI_CAST_DEVICE:-${cast_device:-}}"
 ACTIVE_PROVIDER="${SRANIME_CLI_PROVIDER:-${active_provider:-${ACTIVE_PROVIDER:-hianime}}}"
 export ACTIVE_PROVIDER
 
@@ -1007,6 +1041,9 @@ while [ $# -gt 0 ]; do
             printf "  active_provider:  %s\n" "$ACTIVE_PROVIDER"
             printf "  mode:             %s\n" "$mode"
             printf "  quality:          %s\n" "$quality"
+            printf "  sub_lang:         %s\n" "$sub_lang"
+            printf "  audio_lang:       %s\n" "$audio_lang"
+            printf "  cast_device:      %s\n" "$cast_device"
             printf "  download_dir:     %s\n" "$download_dir"
             printf "  player_function:  %s\n" "$player_function"
             printf "  menu_program:     %s\n" "$menu_program"
@@ -1153,6 +1190,50 @@ while [ $# -gt 0 ]; do
             esac
             queue_clear "$_mode"
             exit 0
+            ;;
+        --sub-lang | -sl)
+            [ $# -lt 2 ] && die "missing argument for --sub-lang!"
+            sub_lang="$2"
+            shift
+            ;;
+        --audio-lang | -al)
+            [ $# -lt 2 ] && die "missing argument for --audio-lang!"
+            audio_lang="$2"
+            shift
+            ;;
+        --cast)
+            [ $# -lt 2 ] && die "missing device argument for --cast!"
+            cast_device="$2"
+            shift
+            ;;
+        --cast-devices)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/cast.sh" ] && . "$_lib_dir/cast.sh" 2>/dev/null || true
+            cast_scan_devices
+            exit $?
+            ;;
+        --web)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/webserver.sh" ] && . "$_lib_dir/webserver.sh" 2>/dev/null || true
+            _web_port=7777
+            if [ -n "$2" ] && printf "%s" "$2" | grep -q "^[0-9]\+$"; then
+                _web_port="$2"
+                shift
+            fi
+            webserver_start "$_web_port"
+            exit $?
+            ;;
+        --web-stop)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/webserver.sh" ] && . "$_lib_dir/webserver.sh" 2>/dev/null || true
+            webserver_stop
+            exit $?
+            ;;
+        --web-status)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/webserver.sh" ] && . "$_lib_dir/webserver.sh" 2>/dev/null || true
+            webserver_status
+            exit $?
             ;;
         --preview)
             shift

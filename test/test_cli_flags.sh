@@ -8,7 +8,7 @@ SRANIME_CLI="./sranime-cli"
 printf "\n\033[1;36mCLI Flag Tests\033[0m\n\n"
 
 _version=$($SRANIME_CLI -V 2>/dev/null)
-assert_contains "Version outputs a version string" "$_version" "5."
+assert_contains "Version outputs a version string" "$_version" "6."
 
 _version_long=$($SRANIME_CLI --version 2>/dev/null)
 assert_eq "Short and long version flags match" "$_version" "$_version_long"
@@ -49,11 +49,21 @@ assert_contains "Help contains --queue-start flag" "$_help" "--queue-start"
 assert_contains "Help contains --queue-pause flag" "$_help" "--queue-pause"
 assert_contains "Help contains --queue-resume flag" "$_help" "--queue-resume"
 assert_contains "Help contains --queue-clear flag" "$_help" "--queue-clear"
+assert_contains "Help contains --sub-lang flag" "$_help" "--sub-lang"
+assert_contains "Help contains --audio-lang flag" "$_help" "--audio-lang"
+assert_contains "Help contains --cast flag" "$_help" "--cast"
+assert_contains "Help contains --cast-devices flag" "$_help" "--cast-devices"
+assert_contains "Help contains --web flag" "$_help" "--web"
+assert_contains "Help contains --web-stop flag" "$_help" "--web-stop"
+assert_contains "Help contains --web-status flag" "$_help" "--web-status"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"
 assert_contains "Dump config shows mode" "$_config" "mode:"
 assert_contains "Dump config shows quality" "$_config" "quality:"
+assert_contains "Dump config shows sub_lang" "$_config" "sub_lang:"
+assert_contains "Dump config shows audio_lang" "$_config" "audio_lang:"
+assert_contains "Dump config shows cast_device" "$_config" "cast_device:"
 assert_contains "Dump config shows player" "$_config" "player_function:"
 assert_contains "Dump config shows enable_preview" "$_config" "enable_preview:"
 

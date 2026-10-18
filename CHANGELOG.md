@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2026-09-28
+
+### Added
+- **Multi-Language Subtitle & Audio Subsystem (`lib/sranime-cli/subtitles.sh`)**:
+  - `--sub-lang, -sl <lang>`: Select preferred subtitle language (e.g. `es`, `fr`, `de`, `it`, `pt`, `ar`, `en`).
+  - `--audio-lang, -al <lang>`: Select preferred audio stream language (e.g. `ja`, `en`, `es`).
+  - Dynamic subtitle track extractor for provider JSON and HLS master manifests with language code normalizer.
+  - Generates player-specific subtitle and audio track flags (`--slang`, `--alang`, `--sub-file`).
+  - Dedicated unit test suite (`test/test_subtitles.sh`) with 19 automated tests.
+- **Smart TV & Chromecast Casting Subsystem (`lib/sranime-cli/cast.sh`)**:
+  - `--cast [device]`: Beam streaming video directly to a Smart TV, Chromecast, or Google Cast receiver via `catt`.
+  - `--cast-devices`: Scan local network for discoverable Cast targets.
+  - Forwarding of video URLs, HTTP headers, and subtitle tracks to external displays.
+  - Dedicated unit test suite (`test/test_cast.sh`) with 6 automated tests.
+- **Embedded Local LAN Web Companion (`lib/sranime-cli/webserver.sh`)**:
+  - `--web [port]`: Starts a lightweight, mobile-responsive local web microserver (default port: `7777`).
+  - Access watch history, search anime, and trigger desktop playback or TV casting from any phone or tablet on the local WiFi network.
+  - `--web-stop` and `--web-status`: Manage the background web companion process.
+  - Dedicated unit test suite (`test/test_webserver.sh`) with 6 automated tests.
+- **Master Test Suite Expansion**:
+  - Expanded test suites to 14 automated suites and 261 total unit tests, all passing with zero regressions.
+
 ## [5.8.0] - 2026-09-28
 
 ### Added

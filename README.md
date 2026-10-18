@@ -87,6 +87,16 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
   - Zero-query seasonal anime browser (`--seasonal [season] [year]`) and trending releases (`--trending`).
   - Airing calendar with live countdown timers (`--calendar / --schedule [hours]`).
   - Graph-based recommendations engine (`--similar [title]`) querying AniList community votes.
+- **Multi-Language Subtitles & Dub Audio**:
+  - Preferred subtitle language selection (`--sub-lang <lang>` e.g. `es`, `fr`, `de`, `it`, `pt`, `ar`, `en`).
+  - Audio stream selection (`--audio-lang <lang>` e.g. `ja`, `en`, `es`) with automatic MPV/IINA/VLC flag generation.
+  - Multi-language subtitle track sidecar preservation on downloads (`--save-subs`).
+- **Turnkey Smart TV & Chromecast Casting**:
+  - Direct 1-command casting to living room TV, Chromecast, or Apple TV via `catt` (`sranime-cli --cast "Living Room TV"`).
+  - Network device scanner (`sranime-cli --cast-devices`) to detect all Cast-enabled screens on local Wi-Fi.
+- **Embedded Local LAN Web Companion**:
+  - Zero-runtime mobile-responsive web dashboard served over your home network (`sranime-cli --web 7777`).
+  - Browse watch history, discover seasonal releases, and trigger desktop playback or TV casting straight from your phone or tablet.
 - **Cross-Platform & POSIX Compliant**: Works seamlessly on Linux, macOS, and Windows (PowerShell/CMD/Git Bash), with zero mandatory runtime overhead.
 
 ## CLI Options Reference
@@ -112,6 +122,13 @@ A cli to browse and watch anime (alone AND with friends). This tool scrapes the 
 | `--skip` | — | Disabled | Use `ani-skip` to automatically skip anime opening intros |
 | `--no-detach` | — | Detached | Keep player attached to terminal (useful for terminal MPV) |
 | `--exit-after-play` | — | Disabled | Exit player and return player exit code |
+| `--sub-lang, -sl` | `<lang>` | `en` | Preferred subtitle language code (e.g. `es`, `fr`, `de`, `it`, `pt`, `ar`, `en`) |
+| `--audio-lang, -al`| `<lang>` | `ja` | Preferred audio language code (e.g. `ja`, `en`, `es`) |
+| `--cast` | `[device]` | — | Cast streaming video directly to a Smart TV or Chromecast via `catt` |
+| `--cast-devices` | — | — | Scan the local WiFi network for discoverable Cast targets |
+| `--web` | `[port]` | `7777` | Start local LAN web companion microserver for phone/tablet control |
+| `--web-stop` | — | — | Stop the background web companion microserver |
+| `--web-status` | — | — | Display status and active PID of the web companion microserver |
 | **Discovery & Recommendations** | | | |
 | `--seasonal` | `[season] [yr]` | Current | Browse popular anime of the current or specified broadcast season |
 | `--trending` | — | — | Browse top trending anime releases right now |
@@ -214,7 +231,29 @@ sranime-cli --queue-status
 sranime-cli --queue-start
 ```
 
-### 5. Viewing Journal & Analytics
+### 5. Multi-Language Subtitles, Casting & Web Companion
+```sh
+# Stream with Spanish subtitles and Japanese audio
+sranime-cli --sub-lang es "Sousou no Frieren"
+
+# Stream with French subtitles
+sranime-cli --sub-lang fr "Attack on Titan"
+
+# Scan available Smart TVs and Chromecasts on local Wi-Fi
+sranime-cli --cast-devices
+
+# Beam episode directly to living room TV
+sranime-cli --cast "Living Room TV" "Steins;Gate"
+
+# Launch local LAN web companion on port 7777 (browse from your phone!)
+sranime-cli --web 7777
+
+# Check status or stop the web companion
+sranime-cli --web-status
+sranime-cli --web-stop
+```
+
+### 6. Viewing Journal & Analytics
 ```sh
 # Inspect lifetime watch statistics and viewing streaks
 sranime-cli --watch-stats

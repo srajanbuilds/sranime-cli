@@ -67,3 +67,10 @@ complete -c sranime-cli -l trending -d "Browse currently trending anime series"
 complete -c sranime-cli -l calendar -d "Display upcoming airing schedule with countdowns"
 complete -c sranime-cli -l schedule -d "Display upcoming airing schedule with countdowns"
 complete -c sranime-cli -l similar -d "Discover recommendations based on anime title" -x
+complete -c sranime-cli -l sub-lang -s sl -d "Preferred subtitle language" -r
+complete -c sranime-cli -l audio-lang -s al -d "Preferred audio language" -r
+complete -c sranime-cli -l cast -d "Cast stream to Smart TV or Chromecast" -r
+complete -c sranime-cli -l cast-devices -d "Scan network for Cast devices"
+complete -c sranime-cli -l web -d "Launch local LAN web companion microserver" -r
+complete -c sranime-cli -l web-stop -d "Stop background web companion microserver"
+complete -c sranime-cli -l web-status -d "Check status of web companion microserver"
