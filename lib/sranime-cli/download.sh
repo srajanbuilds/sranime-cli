@@ -50,6 +50,18 @@ detect_best_downloader() {
     esac
 }
 
+# Format rate limit flags across download engines
+download_format_rate_limit() {
+    _tool="$1"
+    _rate="$2"
+    [ -z "$_rate" ] && return 0
+    case "$_tool" in
+        aria2c) printf "%s" "--max-download-limit=$_rate" ;;
+        yt-dlp|curl) printf "%s" "--limit-rate $_rate" ;;
+        *) ;;
+    esac
+}
+
 # Execute accelerated stream download with fallback
 download_stream() {
     _url="$1"
@@ -77,6 +89,8 @@ download_stream() {
     _refr="${refr:-https://hianime.at/}"
 
     _dl_tool=$(detect_best_downloader "$_url")
+    _rate_flag=""
+    [ -n "${max_rate:-}" ] && _rate_flag=$(download_format_rate_limit "$_dl_tool" "$max_rate")
     _status=1
 
     printf "\033[1;36m==> Downloading:\033[0m %s\n" "$_safe_name"
@@ -97,7 +111,7 @@ download_stream() {
                 --header="Referer: $_refr" \
                 --dir="$_out_dir" \
                 --out="${_safe_name}.part" \
-                $_extra_flags \
+                $_extra_flags $_rate_flag \
                 "$_url"; then
                 mv -f "$_part_file" "$_target_file" 2>/dev/null || true
                 _status=0
@@ -110,7 +124,7 @@ download_stream() {
                 --add-header "Referer:$_refr" \
                 --user-agent "$_agent" \
                 -o "$_target_file" \
-                $_extra_flags \
+                $_extra_flags $_rate_flag \
                 "$_url"; then
                 _status=0
             fi

@@ -27,7 +27,14 @@ fi
 menu() {
     case "$menu_program" in
         fzf) fzf --reverse --cycle --prompt "$1" $2 $3 ;;
-        rofi) rofi -sort -dmenu -i -p "$1" $2 $3 ;;
+        rofi)
+            _covers_dir="${SRANIME_CLI_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/sranime-cli}/covers"
+            if [ -d "$_covers_dir" ]; then
+                rofi -sort -dmenu -i -show-icons -p "$1" $2 $3
+            else
+                rofi -sort -dmenu -i -p "$1" $2 $3
+            fi
+            ;;
         dmenu) dmenu -l 20 -p "$1" $3 ;;
         *) "$menu_program" $3 "$1" ;;
     esac
@@ -211,6 +218,8 @@ help_info() {
         Export lifetime watch log in MyAnimeList XML format
       --import-mal <path>
         Import anime watch history from a MyAnimeList XML file
+      --max-rate, --limit-rate <rate>
+        Throttle download bandwidth (e.g. 5M, 500K) to prevent network congestion
       --nfo
         Generate Jellyfin, Plex & Kodi .nfo metadata and download artwork
       --save-subs
@@ -1190,6 +1199,12 @@ while [ $# -gt 0 ]; do
             esac
             queue_clear "$_mode"
             exit 0
+            ;;
+        --max-rate | --limit-rate)
+            [ $# -lt 2 ] && die "missing rate argument for --max-rate!"
+            max_rate="$2"
+            export max_rate
+            shift
             ;;
         --sub-lang | -sl)
             [ $# -lt 2 ] && die "missing argument for --sub-lang!"

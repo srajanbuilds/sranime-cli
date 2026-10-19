@@ -78,6 +78,11 @@ assert_contains "download_batch_summary includes count" "$sum_out" "3"
 assert_contains "download_batch_summary includes Queue List" "$sum_out" "Queue List"
 assert_contains "download_batch_summary includes items" "$sum_out" "1 2 3"
 
+# Test 11: download_format_rate_limit
+assert_eq "download_format_rate_limit aria2c" "--max-download-limit=5M" "$(download_format_rate_limit "aria2c" "5M")"
+assert_eq "download_format_rate_limit yt-dlp" "--limit-rate 5M" "$(download_format_rate_limit "yt-dlp" "5M")"
+assert_eq "download_format_rate_limit curl" "--limit-rate 5M" "$(download_format_rate_limit "curl" "5M")"
+
 # Cleanup
 rm -rf "${test_out_dir%/*}" 2>/dev/null || true
 
