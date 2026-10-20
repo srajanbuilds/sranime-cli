@@ -74,3 +74,14 @@ complete -c sranime-cli -l cast-devices -d "Scan network for Cast devices"
 complete -c sranime-cli -l web -d "Launch local LAN web companion microserver" -r
 complete -c sranime-cli -l web-stop -d "Stop background web companion microserver"
 complete -c sranime-cli -l web-status -d "Check status of web companion microserver"
+
+complete -c sranime-cli -s t -l theme -d "Search and play Opening & Ending theme songs" -r
+complete -c sranime-cli -l theme-type -d "Filter theme songs by OP or ED" -x -a "all op ed"
+complete -c sranime-cli -s a -l audio-only -d "Stream theme audio only"
+complete -c sranime-cli -l theme-download -d "Download selected theme song"
+complete -c sranime-cli -l notify-airing -d "Check for upcoming simulcasts and send desktop notification"
+complete -c sranime-cli -l airing-window -d "Time horizon in hours for airing alerts" -r
+complete -c sranime-cli -s O -l offline -d "Browse and play downloaded anime from local vault"
+complete -c sranime-cli -l local -d "Specify local vault directory for offline playback" -r
+complete -c sranime-cli -l color-theme -d "Set UI color palette" -x -a "catppuccin dracula nord gruvbox tokyo-night cyberpunk default"
+complete -c sranime-cli -l color-themes -d "Display gallery of terminal color palettes"

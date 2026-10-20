@@ -1,6 +1,6 @@
 # Maintainer: Srajan <https://github.com/srajanbuilds>
 pkgname=sranime-cli
-pkgver=6.0.0
+pkgver=7.0.0
 pkgrel=1
 pkgdesc="High-performance POSIX CLI to browse, stream, download, and track anime"
 arch=('any')

@@ -717,7 +717,47 @@ flatpak install io.mpv.Mpv
 ```
 press enter("A" button on Steam Deck) on questions
 
-#### Installation in steps:
+##### 🎵 Theme Song Jukebox & Anime OSTs
+Stream or download creditless Opening and Ending theme songs directly from AnimeThemes.moe:
+```sh
+sranime-cli --theme "Frieren"                # Interactive OP/ED jukebox
+sranime-cli --theme "Frieren" -ao            # Background audio-only stream (no video window)
+sranime-cli --theme "Frieren" --theme-type op # Only show Opening songs
+sranime-cli --theme "Frieren" --theme-download # Download creditless 1080p/720p WebM
+```
+
+### ⏰ Simulcast Airing Alarms & Broadcast Alerts
+Keep track of upcoming releases matching shows you actually watch:
+```sh
+sranime-cli --notify-airing                  # Send desktop notification for shows airing soon
+sranime-cli --calendar --mine                # Personalized upcoming broadcast schedule
+```
+
+### 📁 Offline Mode & Local Vault Player
+Play your offline library with zero network dependency while retaining subtitles and checkpoints:
+```sh
+sranime-cli --offline                        # Browse & play downloaded vault
+sranime-cli --local ~/Videos/Anime           # Specify custom offline directory
+```
+
+### 🎨 Terminal Color Theme Presets
+Choose a curated aesthetic for `fzf` menus and preview cards:
+```sh
+sranime-cli --color-theme catppuccin        # Catppuccin Mocha
+sranime-cli --color-theme dracula           # Dracula Vampire
+sranime-cli --color-theme nord              # Arctic Nord Frost
+sranime-cli --color-theme cyberpunk         # Neon Cyberpunk
+sranime-cli --color-themes                  # Display visual swatch gallery
+```
+
+### 🎮 In-Player MPV HUD & Hotkeys
+Navigate your autoplay binge directly from the player window:
+- **`N`**: Jump to **Next Episode** immediately.
+- **`P`**: Jump to **Previous Episode** immediately.
+- **`B`**: Save a **Bookmark / Checkpoint** and flash OSD timestamp.
+- **`S`**: Cycle subtitle tracks with enhanced on-screen banner.
+
+## Installation in steps:
 
 ##### Install mpv (Flatpak version):
 
@@ -788,7 +828,47 @@ sudo cp sranime-cli/sranime-cli /usr/local/bin
 rm -rf sranime-cli
 ```
 
-#### Installation in steps:
+##### 🎵 Theme Song Jukebox & Anime OSTs
+Stream or download creditless Opening and Ending theme songs directly from AnimeThemes.moe:
+```sh
+sranime-cli --theme "Frieren"                # Interactive OP/ED jukebox
+sranime-cli --theme "Frieren" -ao            # Background audio-only stream (no video window)
+sranime-cli --theme "Frieren" --theme-type op # Only show Opening songs
+sranime-cli --theme "Frieren" --theme-download # Download creditless 1080p/720p WebM
+```
+
+### ⏰ Simulcast Airing Alarms & Broadcast Alerts
+Keep track of upcoming releases matching shows you actually watch:
+```sh
+sranime-cli --notify-airing                  # Send desktop notification for shows airing soon
+sranime-cli --calendar --mine                # Personalized upcoming broadcast schedule
+```
+
+### 📁 Offline Mode & Local Vault Player
+Play your offline library with zero network dependency while retaining subtitles and checkpoints:
+```sh
+sranime-cli --offline                        # Browse & play downloaded vault
+sranime-cli --local ~/Videos/Anime           # Specify custom offline directory
+```
+
+### 🎨 Terminal Color Theme Presets
+Choose a curated aesthetic for `fzf` menus and preview cards:
+```sh
+sranime-cli --color-theme catppuccin        # Catppuccin Mocha
+sranime-cli --color-theme dracula           # Dracula Vampire
+sranime-cli --color-theme nord              # Arctic Nord Frost
+sranime-cli --color-theme cyberpunk         # Neon Cyberpunk
+sranime-cli --color-themes                  # Display visual swatch gallery
+```
+
+### 🎮 In-Player MPV HUD & Hotkeys
+Navigate your autoplay binge directly from the player window:
+- **`N`**: Jump to **Next Episode** immediately.
+- **`P`**: Jump to **Previous Episode** immediately.
+- **`B`**: Save a **Bookmark / Checkpoint** and flash OSD timestamp.
+- **`S`**: Cycle subtitle tracks with enhanced on-screen banner.
+
+## Installation in steps:
 
 ##### Install dependencies:
 

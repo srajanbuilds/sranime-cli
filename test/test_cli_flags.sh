@@ -8,7 +8,7 @@ SRANIME_CLI="./sranime-cli"
 printf "\n\033[1;36mCLI Flag Tests\033[0m\n\n"
 
 _version=$($SRANIME_CLI -V 2>/dev/null)
-assert_contains "Version outputs a version string" "$_version" "6."
+assert_contains "Version outputs a version string" "$_version" "7."
 
 _version_long=$($SRANIME_CLI --version 2>/dev/null)
 assert_eq "Short and long version flags match" "$_version" "$_version_long"
@@ -57,6 +57,16 @@ assert_contains "Help contains --cast-devices flag" "$_help" "--cast-devices"
 assert_contains "Help contains --web flag" "$_help" "--web"
 assert_contains "Help contains --web-stop flag" "$_help" "--web-stop"
 assert_contains "Help contains --web-status flag" "$_help" "--web-status"
+assert_contains "Help contains --theme flag" "$_help" "--theme"
+assert_contains "Help contains --theme-type flag" "$_help" "--theme-type"
+assert_contains "Help contains --audio-only flag" "$_help" "--audio-only"
+assert_contains "Help contains --theme-download flag" "$_help" "--theme-download"
+assert_contains "Help contains --notify-airing flag" "$_help" "--notify-airing"
+assert_contains "Help contains --airing-window flag" "$_help" "--airing-window"
+assert_contains "Help contains --offline flag" "$_help" "--offline"
+assert_contains "Help contains --local flag" "$_help" "--local"
+assert_contains "Help contains --color-theme flag" "$_help" "--color-theme"
+assert_contains "Help contains --color-themes flag" "$_help" "--color-themes"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"
@@ -66,6 +76,7 @@ assert_contains "Dump config shows sub_lang" "$_config" "sub_lang:"
 assert_contains "Dump config shows audio_lang" "$_config" "audio_lang:"
 assert_contains "Dump config shows cast_device" "$_config" "cast_device:"
 assert_contains "Dump config shows player" "$_config" "player_function:"
+assert_contains "Dump config shows color_theme" "$_config" "color_theme:"
 assert_contains "Dump config shows enable_preview" "$_config" "enable_preview:"
 
 _hist=$($SRANIME_CLI --show-history 2>/dev/null)

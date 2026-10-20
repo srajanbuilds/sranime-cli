@@ -152,20 +152,33 @@ preview_anime() {
         fi
     fi
 
+    # Initialize Color Theme
+    _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+    if [ -f "$_lib_dir/theme_colors.sh" ]; then
+        . "$_lib_dir/theme_colors.sh" 2>/dev/null || true
+        theme_colors_set "${color_theme:-default}"
+    else
+        _tc_border="\033[1;36m"
+        _tc_title="\033[1;37m"
+        _tc_sub="\033[0;35m"
+        _tc_label="\033[1;33m"
+        _tc_reset="\033[0m"
+    fi
+
     # Render ANSI Metadata Card
-    printf "\033[1;36m====================================================\033[0m\n"
-    printf "  \033[1;37m%s\033[0m\n" "$_title"
-    [ -n "$_jname" ] && [ "$_jname" != "$_title" ] && printf "  \033[0;35m%s\033[0m\n" "$_jname"
-    printf "\033[1;36m----------------------------------------------------\033[0m\n"
-    printf "  \033[1;33mFormat:\033[0m %-8s  \033[1;33mDuration:\033[0m %s/ep\n" "$_type" "$_dur"
-    printf "  \033[1;33mEpisodes:\033[0m Sub: \033[1;32m%s\033[0m | Dub: \033[1;34m%s\033[0m\n" "$_sub" "$_dub"
-    printf "  \033[1;33mHistory:\033[0m  ${_watched_color}%s\033[0m\n" "$_watched_info"
-    printf "\033[1;36m----------------------------------------------------\033[0m\n"
-    printf "\033[1;37mSynopsis:\033[0m\n"
+    printf "%b====================================================%b\n" "$_tc_border" "$_tc_reset"
+    printf "  %b%s%b\n" "$_tc_title" "$_title" "$_tc_reset"
+    [ -n "$_jname" ] && [ "$_jname" != "$_title" ] && printf "  %b%s%b\n" "$_tc_sub" "$_jname" "$_tc_reset"
+    printf "%b----------------------------------------------------%b\n" "$_tc_border" "$_tc_reset"
+    printf "  %bFormat:%b %-8s  %bDuration:%b %s/ep\n" "$_tc_label" "$_tc_reset" "$_type" "$_tc_label" "$_tc_reset" "$_dur"
+    printf "  %bEpisodes:%b Sub: \033[1;32m%s\033[0m | Dub: \033[1;34m%s\033[0m\n" "$_tc_label" "$_tc_reset" "$_sub" "$_dub"
+    printf "  %bHistory:%b  ${_watched_color}%s\033[0m\n" "$_tc_label" "$_tc_reset" "$_watched_info"
+    printf "%b----------------------------------------------------%b\n" "$_tc_border" "$_tc_reset"
+    printf "%bSynopsis:%b\n" "$_tc_title" "$_tc_reset"
 
     # Wrap synopsis nicely
     printf "  %s\n" "$_desc" | fold -s -w 50 2>/dev/null || printf "  %s\n" "$_desc"
-    printf "\033[1;36m====================================================\033[0m\n"
+    printf "%b====================================================%b\n" "$_tc_border" "$_tc_reset"
 }
 
 # Format episode list with watched checkmark badges

@@ -1,3 +1,13 @@
+## [7.0.0] - 2026-09-28
+
+### Added
+- **Theme Song & OST Jukebox (`--theme` / `-t`)**: Stream and download creditless anime Openings (OPs) and Endings (EDs) from AnimeThemes.moe with resolution selector and `-ao` audio-only listening mode.
+- **Simulcast Airing Alarms & Episode Alerts (`--notify-airing`)**: Live broadcast tracking matching the user's local watch history and AniList watchlists with automated desktop notifications and `--calendar --mine` digest.
+- **Offline Mode & Local Vault Player (`--offline` / `-O`, `--local`)**: Zero-network offline viewing of local downloads with automatic sidecar subtitle attachment (`.vtt`/`.srt`), checkpoint resumption, and local journal streaks.
+- **Terminal Color Theme Engine (`--color-theme`)**: 6 curated modern aesthetics (Catppuccin Mocha, Dracula, Nord, Gruvbox, Tokyo Night, Cyberpunk) across `fzf`, preview cards, and banner art with `--color-themes` preview gallery.
+- **In-Player MPV OSD HUD & Hotkeys (Lua Addon)**: Seamless binge navigation directly inside MPV with `N` (Next Episode), `P` (Previous Episode), `B` (Bookmark), `S` (Cycle Subtitles), and stylized on-screen overlay HUD.
+- **Expanded Automated Test Suite**: 5 new test suites bringing coverage to 19 suites and 335+ unit tests with 100% headless pass rate.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

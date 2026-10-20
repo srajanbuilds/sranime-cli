@@ -25,6 +25,16 @@ _sranime_cli() {
     )
 
     _arguments -s -S \
+        '(-t --theme)'{-t,--theme}'[Search and stream anime Opening & Ending themes]:query:' \
+        '--theme-type[Filter theme songs by type]:type:(all op ed)' \
+        '(-ao --audio-only)'{-ao,--audio-only}'[Stream theme audio only]' \
+        '--theme-download[Download selected theme song video/audio]' \
+        '--notify-airing[Check for upcoming simulcasts and notify]:hours:' \
+        '--airing-window[Lookahead window in hours for airing alerts]:hours:' \
+        '(-O --offline)'{-O,--offline}'[Browse and play downloaded anime from local vault]' \
+        '--local[Specify local vault directory for offline playback]:directory:_files -/' \
+        '--color-theme[Set UI color palette]:theme:(catppuccin dracula nord gruvbox tokyo-night cyberpunk default)' \
+        '--color-themes[Display visual gallery of all color theme palettes]' \
         '(-c --continue)'{-c,--continue}'[Continue watching from history]' \
         '(-A --autoplay)'{-A,--autoplay}'[Automatically play subsequent episodes continuously]' \
         '--autoplay-limit[Limit number of consecutive autoplay episodes]:count:' \

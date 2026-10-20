@@ -41,7 +41,7 @@ fi
 
 echo "All smoke tests passed successfully!"
 
-echo "[7/8] Running test suites (CLI flags, providers, watchlog, preview, scrobbler, download, discord, playback, discovery, nfo, queue, subtitles, cast, webserver)..."
+echo "[7/8] Running test suites (CLI flags, providers, watchlog, preview, scrobbler, download, discord, playback, discovery, nfo, queue, subtitles, cast, webserver, colortheme, themes, alarms, offline, mpv_hud)..."
 sh test/test_cli_flags.sh
 sh test/test_providers.sh
 sh test/test_watchlog.sh
@@ -56,6 +56,11 @@ sh test/test_queue.sh
 sh test/test_subtitles.sh
 sh test/test_cast.sh
 sh test/test_webserver.sh
+sh test/test_colortheme.sh
+sh test/test_themes.sh
+sh test/test_alarms.sh
+sh test/test_offline.sh
+sh test/test_mpv_hud.sh
 
 echo "[8/8] Checking for stale ani-cli references..."
 if grep -rn "ani-cli" sranime-cli lib/ test/ install.sh Makefile 2>/dev/null | grep -v "ani-skip" | grep -v "backfill" | grep -v "smoke_test.sh"; then

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version_number="6.0.0"
+version_number="7.0.0"
 
 # Module directory resolution
 _bin_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)"
@@ -18,6 +18,7 @@ if [ -n "$SRANIME_LIB_DIR" ]; then
     . "$SRANIME_LIB_DIR/providers.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/playback.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/discovery.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/theme_colors.sh" 2>/dev/null || true
 fi
 
 # UI
@@ -25,8 +26,14 @@ fi
 # shellcheck disable=SC2086
 # $1 = prompt, $2 = multi select flag (for fzf/rofi), $3 = extra flags by user
 menu() {
+    _fzf_color_args=""
+    if [ -n "$color_theme" ] && [ "$color_theme" != "default" ]; then
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        [ -f "$_lib_dir/theme_colors.sh" ] && . "$_lib_dir/theme_colors.sh" 2>/dev/null || true
+        _fzf_color_args=$(theme_colors_fzf_opts "$color_theme" 2>/dev/null || true)
+    fi
     case "$menu_program" in
-        fzf) fzf --reverse --cycle --prompt "$1" $2 $3 ;;
+        fzf) fzf --reverse --cycle $_fzf_color_args --prompt "$1" $2 $3 ;;
         rofi)
             _covers_dir="${SRANIME_CLI_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/sranime-cli}/covers"
             if [ -d "$_covers_dir" ]; then
@@ -250,6 +257,26 @@ help_info() {
         Stop background web companion microserver
       --web-status
         Display status of web companion microserver
+      -t, --theme [query]
+        Search and stream Opening & Ending theme songs (AnimeThemes.moe)
+      --theme-type [op|ed|all]
+        Filter theme songs by OP or ED (default: all)
+      -ao, --audio-only
+        Stream theme audio only (no video window)
+      --theme-download
+        Download selected theme song video/audio
+      --notify-airing [hours]
+        Check for simulcasts airing soon and trigger desktop notifications
+      --airing-window [hours]
+        Time horizon for airing alerts (default: 2h)
+      -O, --offline [path]
+        Browse and play downloaded anime from local vault
+      --local [path]
+        Specify local vault directory for offline playback
+      --color-theme <name>
+        Set UI color palette (catppuccin, dracula, nord, gruvbox, tokyo-night, cyberpunk)
+      --color-themes
+        Display visual preview gallery of all terminal color themes
       --doctor
         Run system diagnostics and dependency check
     Some example usages:
@@ -835,15 +862,23 @@ play() {
                     info "Reached autoplay limit of ${autoplay_limit} episodes."
                     break
                 fi
-                _next_ep=$(printf "%s\n" "$ep_list" | sed -n "/^${ep_no}\$/{n;p;}")
-                if [ -z "$_next_ep" ]; then
-                    info "==> Reached end of episode list for ${anime_title}!"
+                if [ "$mpv_exitcode" != "0" ] && [ "$mpv_exitcode" != "101" ] && [ "$mpv_exitcode" != "102" ]; then
                     break
                 fi
-                ep_no="$_next_ep"
+                if [ "$mpv_exitcode" = "102" ]; then
+                    _prev_ep=$(printf "%s\n" "$ep_list" | grep -B 1 "^${ep_no}\$" | head -n 1)
+                    [ -n "$_prev_ep" ] && [ "$_prev_ep" != "$ep_no" ] && ep_no="$_prev_ep"
+                else
+                    _next_ep=$(printf "%s\n" "$ep_list" | sed -n "/^${ep_no}\$/{n;p;}")
+                    if [ -z "$_next_ep" ]; then
+                        info "==> Reached end of episode list for ${anime_title}!"
+                        break
+                    fi
+                    ep_no="$_next_ep"
+                fi
                 _binge_count=$((_binge_count + 1))
-                printf "\n\033[1;36m==> [Autoplay] Continuing to Episode %s in 3 seconds... (Ctrl+C to stop)\033[0m\n" "$ep_no"
-                sleep 3 || break
+                printf "\n\033[1;36m==> [Autoplay] Continuing to Episode %s in 2 seconds... (Ctrl+C to stop)\033[0m\n" "$ep_no"
+                sleep 2 || break
                 play_episode
             done
         fi
@@ -1056,6 +1091,7 @@ while [ $# -gt 0 ]; do
             printf "  download_dir:     %s\n" "$download_dir"
             printf "  player_function:  %s\n" "$player_function"
             printf "  menu_program:     %s\n" "$menu_program"
+            printf "  color_theme:      %s\n" "${color_theme:-default}"
             printf "  enable_preview:   %s\n" "$enable_preview"
             printf "  skip_intro:       %s\n" "$skip_intro"
             exit 0
@@ -1316,12 +1352,22 @@ while [ $# -gt 0 ]; do
         --calendar | --schedule)
             _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
             [ -f "$_lib_dir/discovery.sh" ] && . "$_lib_dir/discovery.sh" 2>/dev/null || true
+            [ -f "$_lib_dir/alarms.sh" ] && . "$_lib_dir/alarms.sh" 2>/dev/null || true
             _hours=48
+            _mine=0
+            if [ "$2" = "--mine" ] || [ "$2" = "-m" ]; then
+                _mine=1
+                shift
+            fi
             if [ -n "$2" ] && printf "%s" "$2" | grep -q "^[0-9]\+$"; then
                 _hours="$2"
                 shift
             fi
-            discovery_fetch_calendar "$_hours"
+            if [ "$_mine" = "1" ]; then
+                alarms_calendar_mine "$_hours"
+            else
+                discovery_fetch_calendar "$_hours"
+            fi
             exit 0
             ;;
         --similar)
@@ -1357,6 +1403,71 @@ while [ $# -gt 0 ]; do
             scrobble_show_watchlist
             exit 0
             ;;
+        -t | --theme)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/themes.sh" ] && . "$_lib_dir/themes.sh" 2>/dev/null || true
+            theme_mode=1
+            if [ -n "$2" ] && ! printf "%s" "$2" | grep -q "^-"; then
+                theme_query="$2"
+                shift
+            fi
+            ;;
+        --theme-type)
+            [ $# -lt 2 ] && die "missing type argument for --theme-type!"
+            theme_type="$2"
+            shift
+            ;;
+        -ao | --audio-only)
+            audio_only=1
+            ;;
+        --theme-download)
+            theme_download=1
+            ;;
+        --notify-airing)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/alarms.sh" ] && . "$_lib_dir/alarms.sh" 2>/dev/null || true
+            _air_win=2
+            if [ -n "$2" ] && printf "%s" "$2" | grep -q "^[0-9]\+$"; then
+                _air_win="$2"
+                shift
+            fi
+            alarms_notify "$_air_win"
+            exit 0
+            ;;
+        --airing-window)
+            [ $# -lt 2 ] && die "missing window hours for --airing-window!"
+            airing_window="$2"
+            shift
+            ;;
+        -O | --offline)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/offline.sh" ] && . "$_lib_dir/offline.sh" 2>/dev/null || true
+            _vault_path="${download_dir:-${XDG_DATA_HOME:-$HOME/.local/share}/sranime-cli}"
+            if [ -n "$2" ] && ! printf "%s" "$2" | grep -q "^-"; then
+                _vault_path="$2"
+                shift
+            fi
+            offline_interactive "$_vault_path"
+            exit $?
+            ;;
+        --local)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/offline.sh" ] && . "$_lib_dir/offline.sh" 2>/dev/null || true
+            [ $# -lt 2 ] && die "missing directory argument for --local!"
+            offline_interactive "$2"
+            exit $?
+            ;;
+        --color-theme)
+            [ $# -lt 2 ] && die "missing theme name for --color-theme!"
+            color_theme="$2"
+            shift
+            ;;
+        --color-themes)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/theme_colors.sh" ] && . "$_lib_dir/theme_colors.sh" 2>/dev/null || true
+            theme_colors_print_gallery
+            exit 0
+            ;;
         --doctor)
             doctor_check
             ;;
@@ -1389,6 +1500,14 @@ case "$player_function" in
         command -v "$player_function" >/dev/null 2>&1 || [ -e "$player_function" ] || die "Player '$player_function' not found. Please install it or set player in $config_file"
         ;;
 esac
+
+# Theme Song & OST Jukebox direct mode
+if [ "${theme_mode:-0}" = 1 ]; then
+    _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+    [ -f "$_lib_dir/themes.sh" ] && . "$_lib_dir/themes.sh" 2>/dev/null || true
+    themes_interactive "${theme_query:-$query}" "${theme_type:-all}" "${audio_only:-0}" "${theme_download:-0}"
+    exit $?
+fi
 
 # idk where to put this, so I put it here...
 trap 'cleanup; exit 1' INT HUP TERM
