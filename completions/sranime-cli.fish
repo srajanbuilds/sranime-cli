@@ -85,3 +85,13 @@ complete -c sranime-cli -s O -l offline -d "Browse and play downloaded anime fro
 complete -c sranime-cli -l local -d "Specify local vault directory for offline playback" -r
 complete -c sranime-cli -l color-theme -d "Set UI color palette" -x -a "catppuccin dracula nord gruvbox tokyo-night cyberpunk default"
 complete -c sranime-cli -l color-themes -d "Display gallery of terminal color palettes"
+
+complete -c sranime-cli -l skip-filler -d "Automatically skip filler episodes during autoplay"
+complete -c sranime-cli -l canon-only -d "Filter out non-canon filler episodes from picker"
+complete -c sranime-cli -l show-filler -d "Display canon/filler status badges in episode list"
+complete -c sranime-cli -l dashboard -d "Launch interactive Anime Bento terminal dashboard"
+complete -c sranime-cli -l tui -d "Launch interactive Anime Bento terminal dashboard"
+complete -c sranime-cli -l manga -d "Launch Manga Hub to search and read manga" -r
+complete -c sranime-cli -s c -l chapter -d "Jump directly to specified manga chapter" -r
+complete -c sranime-cli -s md -l manga-download -d "Download manga chapter as CBZ"
+complete -c sranime-cli -l manga-lang -d "Preferred manga translation language" -x -a "en ja es fr de it pt"

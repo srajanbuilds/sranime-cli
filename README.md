@@ -757,6 +757,32 @@ Navigate your autoplay binge directly from the player window:
 - **`B`**: Save a **Bookmark / Checkpoint** and flash OSD timestamp.
 - **`S`**: Cycle subtitle tracks with enhanced on-screen banner.
 
+### ⚔️ Smart Filler Badges & Canon Skipping
+Never get stuck in filler arcs by accident. See exact canon/filler classifications directly in the episode picker:
+```sh
+sranime-cli "Bleach"                        # Shows [Canon], [Filler], [Mixed] badges next to episodes
+sranime-cli "Naruto" --canon-only          # Filters out all filler episodes from the picker completely
+sranime-cli "Bleach" -A --skip-filler      # Autoplay binge leaps straight past filler arcs to next canon!
+```
+
+### 🍱 Anime Bento: Full-Screen Interactive Dashboard
+Open a full-screen terminal command-center cockpit:
+```sh
+sranime-cli --dashboard                     # or sranime-cli --tui
+```
+- **Streaks & Progress**: Active viewing streaks and live percentage progress bars.
+- **Simulcast Radar**: Real-time broadcast countdowns for your watched shows.
+- **Single-Key Shortcuts**: Press `1-9` to resume shows, `M` for Manga, `T` for Themes, `Q` to exit.
+
+### 📖 Manga Companion & Chapter Reader Hub
+Seamlessly transition from an anime season cliffhanger into reading the manga:
+```sh
+sranime-cli                                 # Interactive hub prompts: [1] Watch Anime  [2] Read Manga
+sranime-cli --manga "Frieren"               # Search and browse manga chapters
+sranime-cli --manga "Frieren" -c 61         # Jump straight to Chapter 61 (Season 1 continuation)
+sranime-cli --manga "Chainsaw Man" -md -c 1-5 # Download chapters offline as CBZ archives
+```
+
 ## Installation in steps:
 
 ##### Install mpv (Flatpak version):
@@ -867,6 +893,32 @@ Navigate your autoplay binge directly from the player window:
 - **`P`**: Jump to **Previous Episode** immediately.
 - **`B`**: Save a **Bookmark / Checkpoint** and flash OSD timestamp.
 - **`S`**: Cycle subtitle tracks with enhanced on-screen banner.
+
+### ⚔️ Smart Filler Badges & Canon Skipping
+Never get stuck in filler arcs by accident. See exact canon/filler classifications directly in the episode picker:
+```sh
+sranime-cli "Bleach"                        # Shows [Canon], [Filler], [Mixed] badges next to episodes
+sranime-cli "Naruto" --canon-only          # Filters out all filler episodes from the picker completely
+sranime-cli "Bleach" -A --skip-filler      # Autoplay binge leaps straight past filler arcs to next canon!
+```
+
+### 🍱 Anime Bento: Full-Screen Interactive Dashboard
+Open a full-screen terminal command-center cockpit:
+```sh
+sranime-cli --dashboard                     # or sranime-cli --tui
+```
+- **Streaks & Progress**: Active viewing streaks and live percentage progress bars.
+- **Simulcast Radar**: Real-time broadcast countdowns for your watched shows.
+- **Single-Key Shortcuts**: Press `1-9` to resume shows, `M` for Manga, `T` for Themes, `Q` to exit.
+
+### 📖 Manga Companion & Chapter Reader Hub
+Seamlessly transition from an anime season cliffhanger into reading the manga:
+```sh
+sranime-cli                                 # Interactive hub prompts: [1] Watch Anime  [2] Read Manga
+sranime-cli --manga "Frieren"               # Search and browse manga chapters
+sranime-cli --manga "Frieren" -c 61         # Jump straight to Chapter 61 (Season 1 continuation)
+sranime-cli --manga "Chainsaw Man" -md -c 1-5 # Download chapters offline as CBZ archives
+```
 
 ## Installation in steps:
 

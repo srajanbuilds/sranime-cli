@@ -25,6 +25,14 @@ _sranime_cli() {
     )
 
     _arguments -s -S \
+        '--skip-filler[Automatically skip filler episodes during autoplay]' \
+        '--canon-only[Filter out non-canon filler episodes from picker]' \
+        '--show-filler[Display canon/filler status badges in episode list]' \
+        '(--dashboard --tui)'{--dashboard,--tui}'[Launch interactive Anime Bento dashboard]' \
+        '--manga[Launch Manga Hub to search and read manga]:query:' \
+        '(-c --chapter)'{-c,--chapter}'[Jump directly to specified manga chapter]:chapter:' \
+        '(-md --manga-download)'{-md,--manga-download}'[Download manga chapter as CBZ]' \
+        '--manga-lang[Preferred manga language]:language:(en ja es fr de it pt)' \
         '(-t --theme)'{-t,--theme}'[Search and stream anime Opening & Ending themes]:query:' \
         '--theme-type[Filter theme songs by type]:type:(all op ed)' \
         '(-ao --audio-only)'{-ao,--audio-only}'[Stream theme audio only]' \

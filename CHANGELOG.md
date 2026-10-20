@@ -1,3 +1,20 @@
+## [8.0.0] - 2026-09-28
+
+### Added
+- **Smart Filler Episode Badges & Skipping Engine (`--skip-filler` / `--canon-only`)**:
+  - Highlights episode classifications in the picker: `[Canon]`, `[Anime Canon]`, `[Filler]`, `[Mixed]`.
+  - Automatically leaps over filler arcs during continuous autoplay binge (`-A --skip-filler`).
+  - `--canon-only` flag filters out all non-canon filler episodes from the episode picker.
+- **Anime Bento: Full-Screen Interactive TUI Dashboard (`--dashboard` / `--tui`)**:
+  - Responsive ANSI terminal cockpit with watch streaks, in-progress checkpoints, live airing radar countdowns, and background download daemon health.
+  - Keyboard navigation: `[1-9]` instant show resume, `[M]` Manga Reader, `[T]` Themes Jukebox, `[C]` Calendar, `[Q]` Quit.
+- **Manga Companion & Chapter Reader Hub (`--manga`)**:
+  - Dual-mode interactive launcher prompt: `[1] Watch Anime` or `[2] Read Manga`.
+  - MangaDex REST API search, chapter listing, and pagination.
+  - Interactive page reading in terminal via `chafa` (sixel/kitty graphics) or desktop image viewer (`feh`/`imv`).
+  - Reading checkpoints (`manga_checkpoints.tsv`) and offline CBZ/folder chapter downloader (`--manga-download`).
+- **Master Test Suite Expansion**: 3 new test suites bringing total automated coverage to 22 test suites and 388 unit tests with 100% pass rate.
+
 ## [7.0.0] - 2026-09-28
 
 ### Added

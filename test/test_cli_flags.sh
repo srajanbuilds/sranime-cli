@@ -8,7 +8,7 @@ SRANIME_CLI="./sranime-cli"
 printf "\n\033[1;36mCLI Flag Tests\033[0m\n\n"
 
 _version=$($SRANIME_CLI -V 2>/dev/null)
-assert_contains "Version outputs a version string" "$_version" "7."
+assert_contains "Version outputs a version string" "$_version" "8."
 
 _version_long=$($SRANIME_CLI --version 2>/dev/null)
 assert_eq "Short and long version flags match" "$_version" "$_version_long"
@@ -67,6 +67,13 @@ assert_contains "Help contains --offline flag" "$_help" "--offline"
 assert_contains "Help contains --local flag" "$_help" "--local"
 assert_contains "Help contains --color-theme flag" "$_help" "--color-theme"
 assert_contains "Help contains --color-themes flag" "$_help" "--color-themes"
+assert_contains "Help contains --skip-filler flag" "$_help" "--skip-filler"
+assert_contains "Help contains --canon-only flag" "$_help" "--canon-only"
+assert_contains "Help contains --show-filler flag" "$_help" "--show-filler"
+assert_contains "Help contains --dashboard flag" "$_help" "--dashboard"
+assert_contains "Help contains --tui flag" "$_help" "--tui"
+assert_contains "Help contains --manga flag" "$_help" "--manga"
+assert_contains "Help contains --manga-download flag" "$_help" "--manga-download"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"

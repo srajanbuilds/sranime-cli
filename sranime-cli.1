@@ -1,4 +1,4 @@
-.TH "SRANIME-CLI" "1" "September 2026" "sranime-cli 7.0.0" "User Commands"
+.TH "SRANIME-CLI" "1" "September 2026" "sranime-cli 8.0.0" "User Commands"
 .SH NAME
 sranime-cli \- watch anime from the commandline
 .SH SYNOPSIS
@@ -15,6 +15,30 @@ This tool scrapes the site hianime.
 .PD
 \f[B]sranime-cli\f[R] without options defaults to iina on macOS, flatpak mpv on Steamdeck, mpv apk on android, vlc on iOS and mpv media player everywhere else.
 .SH OPTIONS
+.TP
+\fB\--skip-filler\fR
+Automatically skip filler episodes during continuous autoplay binging (-A).
+.TP
+\fB\--canon-only\fR
+Filter out all non-canon filler episodes from the episode selection picker.
+.TP
+\fB\--show-filler\fR
+Display canon/filler status badges ([Canon], [Anime Canon], [Filler], [Mixed]) in episode list.
+.TP
+\fB\--dashboard | --tui\fR
+Launch the full-screen interactive Anime Bento terminal dashboard.
+.TP
+\fB\--manga\fR [\fI\,query\/\fR]
+Launch Manga Hub to search, browse chapters, and read manga in terminal or desktop viewer.
+.TP
+\fB\-c | --chapter\fR \fI\,<num>\/\fR
+Jump directly to specified manga chapter number.
+.TP
+\fB\-md | --manga-download\fR
+Download manga chapter pages locally as CBZ or image directory.
+.TP
+\fB\--manga-lang\fR \fI\,<lang>\/\fR
+Preferred manga translation language (default: en).
 .TP
 \fB\-t | --theme\fR \fI\,<query>\/\fR
 Search and stream creditless Opening (OP) & Ending (ED) theme songs directly via AnimeThemes.moe.

@@ -1,5 +1,5 @@
 {
-    "version": "7.0.0",
+    "version": "8.0.0",
     "description": "High-performance POSIX CLI to browse, stream, download, and track anime.",
     "homepage": "https://github.com/srajanbuilds/sranime-cli",
     "license": "GPL-3.0-or-later",
