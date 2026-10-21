@@ -25,6 +25,11 @@ _sranime_cli() {
     )
 
     _arguments -s -S \
+        '--arc[Select or fuzzy-match canonical story arc]:arc name:' \
+        '--arcs[Interactively marathon story arcs in menu]' \
+        '(--party --stream-lan)'{--party,--stream-lan}'[Start local Wi-Fi watch party server]:port:' \
+        '--party-stop[Stop running background Watch Party streaming relay]' \
+        '--party-status[Display status and URL of active Watch Party stream]' \
         '--skip-filler[Automatically skip filler episodes during autoplay]' \
         '--canon-only[Filter out non-canon filler episodes from picker]' \
         '--show-filler[Display canon/filler status badges in episode list]' \

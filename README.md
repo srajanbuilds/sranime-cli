@@ -774,6 +774,26 @@ sranime-cli --dashboard                     # or sranime-cli --tui
 - **Simulcast Radar**: Real-time broadcast countdowns for your watched shows.
 - **Single-Key Shortcuts**: Press `1-9` to resume shows, `M` for Manga, `T` for Themes, `Q` to exit.
 
+### ⚔️ Canonical Story Arc Marathon (`--arc`, `--arcs`)
+Instantly marathon legendary narrative sagas without looking up episode counts or calculating ranges:
+```sh
+sranime-cli "One Piece" --arc "Marineford"         # Marathon One Piece Eps 457-489
+sranime-cli "Naruto" --arc "Chunin Exams"          # Marathon Naruto Eps 20-67
+sranime-cli "Bleach" --arc "Thousand-Year Blood War" # Marathon Bleach TYBW
+sranime-cli "Dragon Ball Z" --arc "Cell"           # Marathon Androids & Cell Saga
+sranime-cli "Hunter x Hunter" --arc "Chimera Ant"  # Marathon Chimera Ant Arc
+sranime-cli "One Piece" --arcs                     # Interactively browse all 32 story arcs in fzf
+```
+
+### 📱 LAN Watch Party & Terminal QR Code Relay (`--party`)
+Stream any episode synchronously to your phone, tablet, smart TV, or roommates on the same Wi-Fi with zero dependencies:
+```sh
+sranime-cli "Frieren" -e 14 --party                # Stream on local Wi-Fi with terminal QR code
+sranime-cli "One Piece" --arc "Egghead" --party 9000 # Stream story arc on custom port 9000
+sranime-cli --party-status                         # View active Watch Party stream details
+sranime-cli --party-stop                           # Terminate running stream relay
+```
+
 ### 📖 Manga Companion & Chapter Reader Hub
 Seamlessly transition from an anime season cliffhanger into reading the manga:
 ```sh
@@ -910,6 +930,26 @@ sranime-cli --dashboard                     # or sranime-cli --tui
 - **Streaks & Progress**: Active viewing streaks and live percentage progress bars.
 - **Simulcast Radar**: Real-time broadcast countdowns for your watched shows.
 - **Single-Key Shortcuts**: Press `1-9` to resume shows, `M` for Manga, `T` for Themes, `Q` to exit.
+
+### ⚔️ Canonical Story Arc Marathon (`--arc`, `--arcs`)
+Instantly marathon legendary narrative sagas without looking up episode counts or calculating ranges:
+```sh
+sranime-cli "One Piece" --arc "Marineford"         # Marathon One Piece Eps 457-489
+sranime-cli "Naruto" --arc "Chunin Exams"          # Marathon Naruto Eps 20-67
+sranime-cli "Bleach" --arc "Thousand-Year Blood War" # Marathon Bleach TYBW
+sranime-cli "Dragon Ball Z" --arc "Cell"           # Marathon Androids & Cell Saga
+sranime-cli "Hunter x Hunter" --arc "Chimera Ant"  # Marathon Chimera Ant Arc
+sranime-cli "One Piece" --arcs                     # Interactively browse all 32 story arcs in fzf
+```
+
+### 📱 LAN Watch Party & Terminal QR Code Relay (`--party`)
+Stream any episode synchronously to your phone, tablet, smart TV, or roommates on the same Wi-Fi with zero dependencies:
+```sh
+sranime-cli "Frieren" -e 14 --party                # Stream on local Wi-Fi with terminal QR code
+sranime-cli "One Piece" --arc "Egghead" --party 9000 # Stream story arc on custom port 9000
+sranime-cli --party-status                         # View active Watch Party stream details
+sranime-cli --party-stop                           # Terminate running stream relay
+```
 
 ### 📖 Manga Companion & Chapter Reader Hub
 Seamlessly transition from an anime season cliffhanger into reading the manga:

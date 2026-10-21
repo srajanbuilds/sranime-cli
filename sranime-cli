@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version_number="8.0.0"
+version_number="9.0.0"
 
 # Module directory resolution
 _bin_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)"
@@ -22,6 +22,8 @@ if [ -n "$SRANIME_LIB_DIR" ]; then
     . "$SRANIME_LIB_DIR/filler.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/tui.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/manga.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/arcs.sh" 2>/dev/null || true
+    . "$SRANIME_LIB_DIR/party.sh" 2>/dev/null || true
 fi
 
 # UI
@@ -296,6 +298,16 @@ help_info() {
         Set UI color palette (catppuccin, dracula, nord, gruvbox, tokyo-night, cyberpunk)
       --color-themes
         Display visual preview gallery of all terminal color themes
+      --arc [name]
+        Select or fuzzy-match a canonical story arc (e.g. "Marineford")
+      --arcs
+        Interactively browse and marathon story arcs in fzf/menu
+      --party, --stream-lan [port]
+        Start local Wi-Fi watch party server with terminal QR code (default: 8888)
+      --party-stop
+        Stop running background Watch Party streaming relay
+      --party-status
+        Display status, LAN IP, and URL of active Watch Party stream
       --doctor
         Run system diagnostics and dependency check
     Some example usages:
@@ -684,6 +696,11 @@ play_episode() {
     [ "$skip_intro" = 1 ] && skip_flag="$(ani-skip -i "$mal_id" -e "$ep_no")"
     # wait for the previous player to close (in range selection)
     wait
+    if [ "${party_mode:-0}" = 1 ]; then
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        [ -f "$_lib_dir/party.sh" ] && . "$_lib_dir/party.sh" 2>/dev/null || true
+        party_start_server "$video_link" "$anime_title" "$ep_no" "${party_port:-8888}" "$sub_link" "$refr"
+    fi
     [ "$player_function" != "debug" ] && [ "$player_function" != "download" ] && info "Opening ${anime_title} (Episode ${ep_no})..."
     # shellcheck disable=SC2086
     if [ -n "$cast_device" ] || [ "$player_function" = "cast" ] || [ "$player_function" = "catt" ]; then
@@ -947,6 +964,10 @@ autoplay="${SRANIME_CLI_AUTOPLAY:-0}"
 autoplay_limit="${SRANIME_CLI_AUTOPLAY_LIMIT:-}"
 auto_resume="${SRANIME_CLI_RESUME:-0}"
 start_time="${SRANIME_CLI_START_TIME:-}"
+party_port="${SRANIME_CLI_PARTY_PORT:-${party_port:-8888}}"
+arc_mode=0
+arc_query=""
+party_mode=0
 seasonal_name=""
 seasonal_year=""
 similar_target=""
@@ -1538,6 +1559,41 @@ while [ $# -gt 0 ]; do
             theme_colors_print_gallery
             exit 0
             ;;
+        --arc)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/arcs.sh" ] && . "$_lib_dir/arcs.sh" 2>/dev/null || true
+            arc_mode=1
+            if [ -n "$2" ] && ! printf "%s" "$2" | grep -q "^-"; then
+                arc_query="$2"
+                shift
+            fi
+            ;;
+        --arcs)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/arcs.sh" ] && . "$_lib_dir/arcs.sh" 2>/dev/null || true
+            arc_mode=1
+            ;;
+        --party | --stream-lan)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/party.sh" ] && . "$_lib_dir/party.sh" 2>/dev/null || true
+            party_mode=1
+            if [ -n "$2" ] && printf "%s" "$2" | grep -q "^[0-9]\+$"; then
+                party_port="$2"
+                shift
+            fi
+            ;;
+        --party-stop)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/party.sh" ] && . "$_lib_dir/party.sh" 2>/dev/null || true
+            party_stop
+            exit $?
+            ;;
+        --party-status)
+            _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+            [ -f "$_lib_dir/party.sh" ] && . "$_lib_dir/party.sh" 2>/dev/null || true
+            party_status
+            exit $?
+            ;;
         --doctor)
             doctor_check
             ;;
@@ -1749,6 +1805,23 @@ case "$source" in
         _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
         [ -f "$_lib_dir/preview.sh" ] && . "$_lib_dir/preview.sh" 2>/dev/null || true
         [ -f "$_lib_dir/filler.sh" ] && . "$_lib_dir/filler.sh" 2>/dev/null || true
+        [ -f "$_lib_dir/arcs.sh" ] && . "$_lib_dir/arcs.sh" 2>/dev/null || true
+
+        if [ "${arc_mode:-0}" = 1 ] && command -v arcs_get_range >/dev/null 2>&1; then
+            if [ -n "${arc_query:-}" ]; then
+                _arc_range=$(arcs_get_range "$anime_title" "$arc_query")
+                if [ -n "$_arc_range" ]; then
+                    arcs_print_summary "$anime_title" "$arc_query"
+                    ep_no="$_arc_range"
+                else
+                    info "No story arc matching '$arc_query' found. Listing available arcs for ${anime_title}:"
+                    ep_no=$(arcs_choose_interactive "$anime_title" "$menu_program" "$menu_extra_flags")
+                fi
+            else
+                ep_no=$(arcs_choose_interactive "$anime_title" "$menu_program" "$menu_extra_flags")
+            fi
+            [ -z "$ep_no" ] && die "Invalid story arc selection"
+        fi
 
         if [ "${canon_only:-0}" = 1 ] && command -v filler_enrich_episode_list >/dev/null 2>&1; then
             _ep_display=$(filler_enrich_episode_list "$ep_list" "$anime_title" "1")

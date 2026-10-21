@@ -1,4 +1,4 @@
-.TH "SRANIME-CLI" "1" "September 2026" "sranime-cli 8.0.0" "User Commands"
+.TH "SRANIME-CLI" "1" "September 2026" "sranime-cli 9.0.0" "User Commands"
 .SH NAME
 sranime-cli \- watch anime from the commandline
 .SH SYNOPSIS
@@ -16,6 +16,22 @@ This tool scrapes the site hianime.
 \f[B]sranime-cli\f[R] without options defaults to iina on macOS, flatpak mpv on Steamdeck, mpv apk on android, vlc on iOS and mpv media player everywhere else.
 .SH OPTIONS
 .TP
+\fB\--arc [name]\fR
+Select or fuzzy-match a canonical story arc (e.g. "Marineford", "Chunin Exams", "Soul Society") and queue episodes.
+.TP
+\fB\--arcs\fR
+Interactively browse and marathon story arcs in fzf/menu.
+.TP
+\fB\--party, --stream-lan [port]\fR
+Start local Wi-Fi watch party server with terminal QR code (default port: 8888).
+.TP
+\fB\--party-stop\fR
+Stop running background Watch Party streaming relay.
+.TP
+\fB\--party-status\fR
+Display status, LAN IP, and URL of active Watch Party stream.
+.TP
+
 \fB\--skip-filler\fR
 Automatically skip filler episodes during continuous autoplay binging (-A).
 .TP

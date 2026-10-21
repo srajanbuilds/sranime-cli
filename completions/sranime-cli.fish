@@ -95,3 +95,10 @@ complete -c sranime-cli -l manga -d "Launch Manga Hub to search and read manga" 
 complete -c sranime-cli -s c -l chapter -d "Jump directly to specified manga chapter" -r
 complete -c sranime-cli -s md -l manga-download -d "Download manga chapter as CBZ"
 complete -c sranime-cli -l manga-lang -d "Preferred manga translation language" -x -a "en ja es fr de it pt"
+
+complete -c sranime-cli -l arc -d "Select or fuzzy-match canonical story arc" -r
+complete -c sranime-cli -l arcs -d "Interactively browse and marathon story arcs in menu"
+complete -c sranime-cli -l party -d "Start local Wi-Fi watch party server with terminal QR code" -r
+complete -c sranime-cli -l stream-lan -d "Start local Wi-Fi watch party server with terminal QR code" -r
+complete -c sranime-cli -l party-stop -d "Stop running background Watch Party streaming relay"
+complete -c sranime-cli -l party-status -d "Display status and URL of active Watch Party stream"

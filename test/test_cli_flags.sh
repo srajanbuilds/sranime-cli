@@ -8,7 +8,7 @@ SRANIME_CLI="./sranime-cli"
 printf "\n\033[1;36mCLI Flag Tests\033[0m\n\n"
 
 _version=$($SRANIME_CLI -V 2>/dev/null)
-assert_contains "Version outputs a version string" "$_version" "8."
+assert_contains "Version outputs a version string" "$_version" "9.0"
 
 _version_long=$($SRANIME_CLI --version 2>/dev/null)
 assert_eq "Short and long version flags match" "$_version" "$_version_long"
@@ -74,6 +74,12 @@ assert_contains "Help contains --dashboard flag" "$_help" "--dashboard"
 assert_contains "Help contains --tui flag" "$_help" "--tui"
 assert_contains "Help contains --manga flag" "$_help" "--manga"
 assert_contains "Help contains --manga-download flag" "$_help" "--manga-download"
+assert_contains "Help contains --arc flag" "$_help" "--arc"
+assert_contains "Help contains --arcs flag" "$_help" "--arcs"
+assert_contains "Help contains --party flag" "$_help" "--party"
+assert_contains "Help contains --stream-lan flag" "$_help" "--stream-lan"
+assert_contains "Help contains --party-stop flag" "$_help" "--party-stop"
+assert_contains "Help contains --party-status flag" "$_help" "--party-status"
 
 _config=$($SRANIME_CLI --dump-config 2>/dev/null)
 assert_contains "Dump config shows active_provider" "$_config" "active_provider:"
@@ -110,6 +116,12 @@ assert_contains "List providers outputs gogo" "$_provs" "gogo"
 
 _scrobble=$($SRANIME_CLI --scrobble-status 2>/dev/null)
 assert_contains "Scrobble status produces output" "$_scrobble" "AniList"
+
+_party_stat=$($SRANIME_CLI --party-status 2>&1 || true)
+assert_contains "Party status outputs status message" "$_party_stat" "Watch Party"
+
+_party_stp=$($SRANIME_CLI --party-stop 2>&1 || true)
+assert_contains "Party stop outputs stopped or clean message" "$_party_stp" "Watch Party"
 
 $SRANIME_CLI --doctor >/dev/null 2>&1 || true
 

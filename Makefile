@@ -16,6 +16,7 @@ install:
 	install -Dm644 sranime-cli.conf $(DESTDIR)$(DOCDIR)/sranime-cli.conf.example
 	install -d $(DESTDIR)$(LIBDIR)
 	install -m644 lib/sranime-cli/*.sh $(DESTDIR)$(LIBDIR)/
+	install -m644 lib/sranime-cli/*.py $(DESTDIR)$(LIBDIR)/ 2>/dev/null || true
 	install -d $(DESTDIR)$(LIBDIR)/providers
 	install -m644 lib/sranime-cli/providers/*.sh $(DESTDIR)$(LIBDIR)/providers/
 	@if [ -f _sranime-cli-bash ]; then \

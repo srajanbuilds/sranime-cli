@@ -27,6 +27,25 @@
 
 # Changelog
 
+## [9.0.0] - 2026-10-01 - The Social & Narrative Suite
+
+### Added
+- **Canonical Story Arc Marathon Engine (`--arc [name]`, `--arcs`)**:
+  - Built-in narrative story arc registries for major anime series: *One Piece* (32 canonical arcs including Marineford, Enies Lobby, Wano, Egghead), *Naruto*, *Naruto Shippuden*, *Bleach* (including TYBW), *Hunter x Hunter (2011)*, *Dragon Ball Z*, *Jujutsu Kaisen* (Shibuya Incident, Hidden Inventory), and *Demon Slayer*.
+  - Single-command marathon binge: `sranime-cli "One Piece" --arc "Marineford"` automatically resolves and queues episodes 457–489.
+  - Interactive story arc browser (`--arcs`) with episode range spans, counts, and synopses.
+  - Full case-insensitive fuzzy matching and colorized terminal marathon cards.
+- **LAN Stream Relay & Terminal QR Code Watch Party (`--party`, `--stream-lan [port]`)**:
+  - Local Wi-Fi HTTP streaming relay allowing instant viewing on phones, tablets, smart TVs, or roommate browsers.
+  - Zero-dependency ANSI/Unicode QR code generated directly inside the terminal: scan with any phone camera to connect instantly.
+  - Responsive Dark-Mode HTML5 video player with title banner, live sync indicator, HLS streaming, and full keyboard navigation.
+  - Server lifecycle management: `--party-status` and `--party-stop`.
+- **Expanded Automated Test Suite**:
+  - Added `test/test_arcs.sh` (49 unit tests) and `test/test_party.sh` (21 unit tests).
+  - Total automated unit test coverage expanded to **24 suites and 428+ passing tests** (100% headless).
+
+---
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
