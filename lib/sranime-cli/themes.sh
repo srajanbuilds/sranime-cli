@@ -76,7 +76,7 @@ try:
     for a in animes:
         anime_name = a.get("name", "Anime")
         for t in a.get("animethemes", []):
-            ttype = (t.get("type") or "OP").upper()
+            ttype = (t.get("type") or (t.get("slug")[:2] if t.get("slug") else "") or "OP").upper()
             slug_tag = t.get("slug") or ttype
             
             if filter_type == "op" and not ttype.startswith("OP"):
@@ -91,7 +91,7 @@ try:
 
             for entry in t.get("animethemeentries", []):
                 for v in entry.get("videos", []):
-                    link = v.get("link")
+                    link = v.get("link") or (v.get("audio") or {}).get("link")
                     if not link:
                         continue
                     res = v.get("resolution") or 720

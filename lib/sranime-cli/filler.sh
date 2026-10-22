@@ -101,7 +101,7 @@ _filler_builtin_check() {
 filler_get_episode_status() {
     _title="$1"
     _ep="$2"
-    _slug=$(filler_slugify "$_title")
+    _slug="${3:-$(filler_slugify "$_title")}"
 
     # 1. Builtin database check
     _builtin=$(_filler_builtin_check "$_slug" "$_ep" 2>/dev/null || true)
@@ -161,11 +161,12 @@ filler_enrich_episode_list() {
     _canon_only="${3:-0}"
 
     [ -z "$_ep_list" ] && return 1
+    _slug=$(filler_slugify "$_anime_title")
 
     printf "%s
 " "$_ep_list" | while IFS= read -r _ep || [ -n "$_ep" ]; do
         [ -z "$_ep" ] && continue
-        _status=$(filler_get_episode_status "$_anime_title" "$_ep")
+        _status=$(filler_get_episode_status "$_anime_title" "$_ep" "$_slug")
         
         # If canon-only mode is active, skip filler episodes completely
         if [ "$_canon_only" = "1" ] && [ "$_status" = "FILLER" ]; then

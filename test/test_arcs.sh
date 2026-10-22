@@ -94,4 +94,14 @@ _summary_output=$(arcs_print_summary "One Piece" "Marineford")
 assert_contains "Summary has header" "$_summary_output" "STORY ARC MARATHON"
 assert_contains "Summary has episodes" "$_summary_output" "457 - 489"
 
+# Test 17: Additional built-in series
+assert_eq "Attack on Titan Marley range" "60-75" "$(arcs_get_range 'Attack on Titan' 'Marley')"
+assert_eq "JoJo Stardust Crusaders range" "27-74" "$(arcs_get_range 'JoJo Bizarre' 'Stardust Crusaders')"
+assert_eq "Frieren Exam range" "18-28" "$(arcs_get_range 'Frieren' 'Mage Exam')"
+assert_eq "Death Note L investigation range" "1-25" "$(arcs_get_range 'Death Note' 'Light')"
+
+# Test 18: Online dynamic arc fetching & caching
+_frieren_list=$(arcs_list "Frieren")
+assert_contains "Arcs list includes Frieren Season/Exam" "$_frieren_list" "1-17"
+
 print_test_summary

@@ -59,10 +59,11 @@ watchlog_show() {
     printf "\033[0;90m%s\033[0m\n" "----------------------------------------------------------------------------------"
 
     _shown=0
+    _lower_filter=""
+    [ -n "$_filter" ] && _lower_filter=$(printf "%s" "$_filter" | tr '[:upper:]' '[:lower:]')
     while IFS='	' read -r _ts _action _ep _id _title _prov; do
         [ -z "$_title" ] && continue
         if [ -n "$_filter" ]; then
-            _lower_filter=$(printf "%s" "$_filter" | tr '[:upper:]' '[:lower:]')
             _lower_title=$(printf "%s" "$_title" | tr '[:upper:]' '[:lower:]')
             _match=0
 

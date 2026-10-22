@@ -18,6 +18,7 @@ sanitize_filename() {
             -e 's/[[:space:]]*$//' \
             -e 's/ - - / - /g'
 }
+download_sanitize_filename() { sanitize_filename "$@"; }
 
 # Determine optimal downloader binary for the given stream URL
 # HLS (.m3u8) streams require yt-dlp or ffmpeg

@@ -1,15 +1,26 @@
 #!/bin/sh
 # sranime-cli Canonical Story Arc Marathon Engine
 #
-# Provides built-in story arc databases and episode range selectors for:
-#   - One Piece
-#   - Naruto
-#   - Naruto Shippuden
-#   - Bleach
-#   - Hunter x Hunter
-#   - Dragon Ball Z
-#   - Jujutsu Kaisen
-#   - Demon Slayer (Kimetsu no Yaiba)
+# Provides built-in story arc databases and dynamic online fetcher for:
+#   - One Piece (32 arcs)
+#   - Naruto (5 arcs)
+#   - Naruto Shippuden (14 arcs)
+#   - Bleach (17 arcs)
+#   - Hunter x Hunter (6 arcs)
+#   - Dragon Ball Z (6 sagas)
+#   - Dragon Ball Super (5 arcs)
+#   - Jujutsu Kaisen (5 arcs)
+#   - Demon Slayer (8 arcs)
+#   - Attack on Titan (8 arcs)
+#   - JoJo's Bizarre Adventure (6 parts)
+#   - My Hero Academia (7 arcs)
+#   - Fullmetal Alchemist: Brotherhood (4 sagas)
+#   - Death Note (2 sagas)
+#   - Vinland Saga (2 arcs)
+#   - Chainsaw Man (3 arcs)
+#   - Frieren: Beyond Journey's End (2 arcs)
+#   - Solo Leveling (3 arcs)
+#   - PLUS Dynamic Online Fetching for ANY anime via Wikipedia & AniList APIs!
 #
 # Functions:
 #   - arcs_slugify <title>
@@ -21,7 +32,33 @@
 #   - arcs_print_summary <title> <query>
 #   - arcs_choose_interactive <title> [menu_program] [menu_flags]
 
+_arcs_cache_dir="${SRANIME_CLI_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/sranime-cli}/arcs"
+
+_ensure_arcs_cache() {
+    [ ! -d "$_arcs_cache_dir" ] && mkdir -p "$_arcs_cache_dir" 2>/dev/null || true
+}
+
 arcs_slugify() {
+    case "$1" in
+        *[sS][hH][iI][pP][pP][uU][dD][eE][nN]*) echo "naruto-shippuden"; return 0 ;;
+        *[nN][aA][rR][uU][tT][oO]*) echo "naruto"; return 0 ;;
+        *[oO][nN][eE]*[pP][iI][eE][cC][eE]*) echo "one-piece"; return 0 ;;
+        *[bB][lL][eE][aA][cC][hH]*) echo "bleach"; return 0 ;;
+        *[hH][uU][nN][tT][eE][rR]*[hH][uU][nN][tT][eE][rR]*|*[hH][xX][hH]*) echo "hunter-x-hunter"; return 0 ;;
+        *[dD][rR][aA][gG][oO][nN]*[bB][aA][lL][lL]*[zZ]*|*[dD][bB][zZ]*) echo "dragon-ball-z"; return 0 ;;
+        *[dD][rR][aA][gG][oO][nN]*[bB][aA][lL][lL]*[sS][uU][pP][eE][rR]*|*[dD][bB][sS]*) echo "dragon-ball-super"; return 0 ;;
+        *[jJ][uU][jJ][uU][tT][sS][uU]*|*[jJ][jJ][kK]*) echo "jujutsu-kaisen"; return 0 ;;
+        *[dD][eE][mM][oO][nN]*[sS][lL][aA][yY][eE][rR]*|*[kK][iI][mM][eE][tT][sS][uU]*) echo "demon-slayer"; return 0 ;;
+        *[aA][tT][tT][aA][cC][kK]*[tT][iI][tT][aA][nN]*|*[sS][hH][iI][nN][gG][eE][kK][iI]*|*[aA][oO][tT]*) echo "attack-on-titan"; return 0 ;;
+        *[jJ][oO][jJ][oO]*) echo "jojo-s-bizarre-adventure"; return 0 ;;
+        *[mM][yY]*[hH][eE][rR][oO]*|*[bB][oO][kK][uU]*[hH][eE][rR][oO]*|*[mM][hH][aA]*) echo "my-hero-academia"; return 0 ;;
+        *[fF][uU][lL][lL][mM][eE][tT][aA][lL]*|*[fF][mM][aA][bB]*) echo "fullmetal-alchemist-brotherhood"; return 0 ;;
+        *[dD][eE][aA][tT][hH]*[nN][oO][tT][eE]*) echo "death-note"; return 0 ;;
+        *[vV][iI][nN][lL][aA][nN][dD]*) echo "vinland-saga"; return 0 ;;
+        *[cC][hH][aA][iI][nN][sS][aA][wW]*) echo "chainsaw-man"; return 0 ;;
+        *[fF][rR][iI][eE][rR][eE][nN]*) echo "frieren"; return 0 ;;
+        *[sS][oO][lL][oO]*[lL][eE][vV][eE][lL]*) echo "solo-leveling"; return 0 ;;
+    esac
     _raw="$1"
     _s=$(printf '%s' "$_raw" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//')
     case "$_s" in
@@ -31,22 +68,47 @@ arcs_slugify() {
         *bleach*) echo "bleach" ;;
         *hunter*hunter*|*hxh*) echo "hunter-x-hunter" ;;
         *dragon-ball-z*|*dbz*) echo "dragon-ball-z" ;;
+        *dragon-ball-super*|*dbs*) echo "dragon-ball-super" ;;
         *jujutsu*kaisen*|*jjk*) echo "jujutsu-kaisen" ;;
         *demon-slayer*|*kimetsu*no*yaiba*) echo "demon-slayer" ;;
+        *attack-on-titan*|*shingeki*no*kyojin*|*aot*) echo "attack-on-titan" ;;
+        *jojo*bizarre*|*jojo*) echo "jojo-s-bizarre-adventure" ;;
+        *my-hero-academia*|*boku-no-hero*|*mha*) echo "my-hero-academia" ;;
+        *fullmetal-alchemist*brotherhood*|*fmab*) echo "fullmetal-alchemist-brotherhood" ;;
+        *death-note*) echo "death-note" ;;
+        *vinland-saga*) echo "vinland-saga" ;;
+        *chainsaw-man*) echo "chainsaw-man" ;;
+        *frieren*) echo "frieren" ;;
+        *solo-leveling*) echo "solo-leveling" ;;
         *) echo "$_s" ;;
     esac
 }
 
 arcs_has_data() {
-    _s=$(arcs_slugify "$1")
+    _title="$1"
+    _s=$(arcs_slugify "$_title")
     case "$_s" in
-        one-piece|naruto|naruto-shippuden|bleach|hunter-x-hunter|dragon-ball-z|jujutsu-kaisen|demon-slayer)
+        one-piece|naruto|naruto-shippuden|bleach|hunter-x-hunter|dragon-ball*|dbz|jujutsu-kaisen|demon-slayer|attack-on-titan|jojo*|my-hero-academia|mha|fullmetal-alchemist*|death-note|vinland-saga|chainsaw-man|frieren|solo-leveling)
             return 0
             ;;
-        *)
-            return 1
-            ;;
     esac
+
+    # Check cache
+    _ensure_arcs_cache
+    if [ -f "$_arcs_cache_dir/${_s}.tsv" ]; then
+        return 0
+    fi
+
+    # Check dynamic online
+    _script_dir=$(cd "$(dirname "$0")" && pwd)
+    if [ -f "$_script_dir/arcs_online.py" ] && command -v python >/dev/null 2>&1; then
+        python "$_script_dir/arcs_online.py" "$_title" "$_arcs_cache_dir" >/dev/null 2>&1 || true
+        if [ -f "$_arcs_cache_dir/${_s}.tsv" ]; then
+            return 0
+        fi
+    fi
+
+    return 1
 }
 
 _arcs_registry() {
@@ -114,6 +176,7 @@ _arcs_registry() {
             ;;
         bleach)
             printf "%s\t%s\t%s\t%s\t%s\n" "substitute-shinigami" "1-20" "The Substitute Shinigami Arc" "20" "Ichigo gains soul reaper powers and defends Karakura Town from Hollows."
+            printf "%s\t%s\t%s\t%s\t%s\n" "soul-society" "21-63" "Soul Society Arc" "43" "Ichigo and allies breach the Seireitei to rescue Rukia Kuchiki."
             printf "%s\t%s\t%s\t%s\t%s\n" "soul-society-sneak-entry" "21-41" "Soul Society: The Sneak Entry Arc" "21" "Ichigo and friends breach the Seireitei to rescue Rukia Kuchiki."
             printf "%s\t%s\t%s\t%s\t%s\n" "soul-society-the-rescue" "42-63" "Soul Society: The Rescue Arc" "22" "Bankai unlocked; captains clash; Sosuke Aizen reveals his betrayal."
             printf "%s\t%s\t%s\t%s\t%s\n" "bount" "64-109" "The Bount Arc" "46" "Immortal soul-consuming Bounts threaten Karakura Town and Soul Society."
@@ -146,6 +209,13 @@ _arcs_registry() {
             printf "%s\t%s\t%s\t%s\t%s\n" "other-world" "195-199" "Other World Tournament Saga" "5" "Goku competes in King Kai's tournament against Pikkon."
             printf "%s\t%s\t%s\t%s\t%s\n" "majin-buu-saga" "200-291" "Majin Buu Saga" "92" "Babidi awakens Majin Buu; Fusion, Super Saiyan 3, and the Super Spirit Bomb."
             ;;
+        dragon-ball-super)
+            printf "%s\t%s\t%s\t%s\t%s\n" "battle-of-gods" "1-14" "God of Destruction Beerus Saga" "14" "Beerus searches for Super Saiyan God; Goku unlocks divine ki."
+            printf "%s\t%s\t%s\t%s\t%s\n" "resurrection-f" "15-27" "Golden Frieza Saga" "13" "Frieza is revived by Sorbet and achieves Golden form."
+            printf "%s\t%s\t%s\t%s\t%s\n" "universe-6" "28-46" "Universe 6 Tournament Saga" "19" "Champa challenges Beerus to a martial arts contest for the Super Dragon Balls."
+            printf "%s\t%s\t%s\t%s\t%s\n" "future-trunks" "47-76" "Future Trunks & Goku Black Saga" "30" "Goku Black and Zamasu enact the Zero Mortals Plan."
+            printf "%s\t%s\t%s\t%s\t%s\n" "tournament-of-power" "77-131" "Universe Survival & Tournament of Power" "55" "80 warriors clash in the World of Void; Goku unlocks Ultra Instinct."
+            ;;
         jujutsu-kaisen)
             printf "%s\t%s\t%s\t%s\t%s\n" "fearsome-womb" "1-13" "Introduction & Vs. Mahito Arc" "13" "Yuji swallows Sukuna's finger and enters Jujutsu High; clash with Mahito."
             printf "%s\t%s\t%s\t%s\t%s\n" "kyoto-goodwill" "14-21" "Kyoto Goodwill Event Arc" "8" "Tokyo and Kyoto sister schools compete as Special Grade curses ambush."
@@ -163,12 +233,93 @@ _arcs_registry() {
             printf "%s\t%s\t%s\t%s\t%s\n" "swordsmith-village" "45-55" "Swordsmith Village Arc" "11" "Tanjiro, Muichiro, and Mitsuri defend village from Hantengu and Gyokko."
             printf "%s\t%s\t%s\t%s\t%s\n" "hashira-training" "56-63" "Hashira Training Arc" "8" "Demon Slayer Corps undertakes intensive training under all surviving Hashira."
             ;;
+        attack-on-titan)
+            printf "%s\t%s\t%s\t%s\t%s\n" "fall-of-shiganshina" "1-13" "Fall of Shiganshina & Battle of Trost" "13" "The Colossal Titan breaches Wall Maria; Eren discovers his titan power."
+            printf "%s\t%s\t%s\t%s\t%s\n" "female-titan" "14-25" "104th Training Corps & Female Titan Arc" "12" "The Scout Regiment 57th expedition; Annie Leonhart revealed."
+            printf "%s\t%s\t%s\t%s\t%s\n" "clash-of-the-titans" "26-37" "Clash of the Titans Arc" "12" "Beast Titan appears; Reiner and Bertholdt reveal their identities."
+            printf "%s\t%s\t%s\t%s\t%s\n" "royal-government" "38-49" "Royal Government & Uprising Arc" "12" "Levi squad clashes with the Military Police; Historia claims the crown."
+            printf "%s\t%s\t%s\t%s\t%s\n" "return-to-shiganshina" "50-59" "Return to Shiganshina Arc" "10" "Erwin's suicide charge; Armin inherits Colossal Titan; the basement truth."
+            printf "%s\t%s\t%s\t%s\t%s\n" "marley" "60-75" "Marley Arc" "16" "Eren infiltrates Liberio and launches surprise raid on Marley."
+            printf "%s\t%s\t%s\t%s\t%s\n" "war-for-paradis" "76-87" "War for Paradis Arc" "12" "Yeagerist coup; Marley counter-invades; Eren activates the Rumbling."
+            printf "%s\t%s\t%s\t%s\t%s\n" "the-rumbling" "88-94" "The Rumbling & Final Chapters" "7" "The Alliance fights Eren and the Founder on the back of the Colossal."
+            ;;
+        jojo-s-bizarre-adventure)
+            printf "%s\t%s\t%s\t%s\t%s\n" "phantom-blood" "1-9" "Part 1: Phantom Blood" "9" "Jonathan Joestar masters Hamon to battle vampire Dio Brando."
+            printf "%s\t%s\t%s\t%s\t%s\n" "battle-tendency" "10-26" "Part 2: Battle Tendency" "17" "Joseph Joestar fights the ancient Pillar Men across Europe."
+            printf "%s\t%s\t%s\t%s\t%s\n" "stardust-crusaders" "27-74" "Part 3: Stardust Crusaders" "48" "Jotaro Kujo and the crusaders travel to Egypt to eliminate DIO."
+            printf "%s\t%s\t%s\t%s\t%s\n" "diamond-is-unbreakable" "75-113" "Part 4: Diamond is Unbreakable" "39" "Josuke Higashikata protects Morioh from serial killer Yoshikage Kira."
+            printf "%s\t%s\t%s\t%s\t%s\n" "golden-wind" "114-152" "Part 5: Golden Wind (Vento Aureo)" "39" "Giorno Giovanna joins Passione to overthrow boss Diavolo."
+            printf "%s\t%s\t%s\t%s\t%s\n" "stone-ocean" "153-190" "Part 6: Stone Ocean" "38" "Jolyne Cujoh fights Father Pucci inside Green Dolphin Street Prison."
+            ;;
+        my-hero-academia)
+            printf "%s\t%s\t%s\t%s\t%s\n" "usj-and-beginning" "1-13" "U.A. Beginning & U.S.J. Arc" "13" "Izuku receives One For All; League of Villains attacks the U.S.J."
+            printf "%s\t%s\t%s\t%s\t%s\n" "sports-festival" "14-25" "U.A. Sports Festival Arc" "12" "Students compete on the grand stage; Todoroki unleashes his flames."
+            printf "%s\t%s\t%s\t%s\t%s\n" "hero-killer-stain" "26-33" "Vs. Hero Killer Stain Arc" "8" "Deku, Todoroki, and Iida battle Hero Killer Stain in Hosu City."
+            printf "%s\t%s\t%s\t%s\t%s\n" "training-camp-hideout" "39-50" "Forest Training Camp & Hideout Raid" "12" "Bakugo kidnapped; All Might defeats All For One in Kamino Ward."
+            printf "%s\t%s\t%s\t%s\t%s\n" "shie-hassaikai" "63-78" "Shie Hassaikai & Overhaul Arc" "16" "Nighteye and heroes raid the Yakuza stronghold to rescue Eri."
+            printf "%s\t%s\t%s\t%s\t%s\n" "paranormal-liberation" "116-138" "Paranormal Liberation War Arc" "23" "Heroes raid the hospital and villa; Shigaraki awakens with All For One."
+            printf "%s\t%s\t%s\t%s\t%s\n" "dark-hero" "139-148" "Dark Hero (Black Hero) Arc" "10" "Deku leaves U.A. High to shoulder the burden of One For All alone."
+            ;;
+        fullmetal-alchemist-brotherhood)
+            printf "%s\t%s\t%s\t%s\t%s\n" "early-days" "1-14" "Early Days & Central City Arc" "14" "Edward and Alphonse search for Philosopher's Stone; tragedy of Nina Tucker."
+            printf "%s\t%s\t%s\t%s\t%s\n" "dublith-and-wrath" "15-25" "Dublith & Wrath Arc" "11" "Training with Teacher Izumi Curtis; Fuhrer King Bradley revealed as Wrath."
+            printf "%s\t%s\t%s\t%s\t%s\n" "fort-briggs" "26-38" "Fort Briggs & Northern Glacier Arc" "13" "Major General Olivier Armstrong; Sloth breaches the fortress underground."
+            printf "%s\t%s\t%s\t%s\t%s\n" "the-promised-day" "39-64" "The Promised Day & Father Arc" "26" "The nationwide transmutation circle battle; Edward vs. Father."
+            ;;
+        death-note)
+            printf "%s\t%s\t%s\t%s\t%s\n" "l-investigation" "1-25" "L vs. Light Yagami Arc" "25" "The genius cat-and-mouse duel between Kira and world-famous detective L."
+            printf "%s\t%s\t%s\t%s\t%s\n" "near-and-mello" "26-37" "Near and Mello (Successors) Arc" "12" "L's successors pursue Kira to his final confrontation in the Yellow Box."
+            ;;
+        vinland-saga)
+            printf "%s\t%s\t%s\t%s\t%s\n" "war-prologue" "1-24" "War / Prologue Arc" "24" "Thorfinn seeks vengeance against Askeladd amid Danish conquest of England."
+            printf "%s\t%s\t%s\t%s\t%s\n" "slave-ketil-farm" "25-48" "Slave / Ketil's Farm Arc" "24" "Thorfinn's spiritual redemption as a slave on Ketil's farm with Einar."
+            ;;
+        chainsaw-man)
+            printf "%s\t%s\t%s\t%s\t%s\n" "bat-devil" "1-5" "Introduction & Bat Devil Arc" "5" "Denji merges with Pochita and joins Public Safety Devil Hunters."
+            printf "%s\t%s\t%s\t%s\t%s\n" "eternity-devil" "6-8" "Eternity Devil Hotel Arc" "3" "Special Division 4 is trapped on the 8th floor of the hotel."
+            printf "%s\t%s\t%s\t%s\t%s\n" "katana-man" "9-12" "Katana Man Arc" "4" "Surviving ambushes by the Gun Devil's allies and mastering the Chainsaw."
+            ;;
+        frieren)
+            printf "%s\t%s\t%s\t%s\t%s\n" "journey-to-aureole" "1-17" "Journey to Aureole Arc" "17" "Frieren, Fern, and Stark journey north to the resting place of souls."
+            printf "%s\t%s\t%s\t%s\t%s\n" "first-class-mage-exam" "18-28" "First-Class Mage Exam Arc" "11" "Mages compete in the Northern Plateau under the supervision of Serie."
+            ;;
+        solo-leveling)
+            printf "%s\t%s\t%s\t%s\t%s\n" "double-dungeon" "1-4" "D-Rank Double Dungeon Arc" "4" "Sung Jinwoo survives the Cartenon Temple god statue slaughter."
+            printf "%s\t%s\t%s\t%s\t%s\n" "daily-quests" "5-8" "Daily Quests & C-Rank Dungeon" "4" "Jinwoo levels up through the system and battles Kasaka and Cerberus."
+            printf "%s\t%s\t%s\t%s\t%s\n" "job-change" "9-12" "Job Change & Red Gate Arc" "4" "Jinwoo enters the Job Change Quest and becomes the Shadow Monarch."
+            ;;
     esac
 }
 
 arcs_list() {
-    _s=$(arcs_slugify "$1")
-    _arcs_registry "$_s"
+    _title="$1"
+    _s=$(arcs_slugify "$_title")
+
+    # 1. Built-in registry
+    _reg=$(_arcs_registry "$_s")
+    if [ -n "$_reg" ]; then
+        printf "%s\n" "$_reg"
+        return 0
+    fi
+
+    # 2. Local cache file
+    _ensure_arcs_cache
+    if [ -f "$_arcs_cache_dir/${_s}.tsv" ]; then
+        cat "$_arcs_cache_dir/${_s}.tsv"
+        return 0
+    fi
+
+    # 3. Dynamic online fetcher
+    _script_dir=$(cd "$(dirname "$0")" && pwd)
+    if [ -f "$_script_dir/arcs_online.py" ] && command -v python >/dev/null 2>&1; then
+        python "$_script_dir/arcs_online.py" "$_title" "$_arcs_cache_dir" 2>/dev/null
+        if [ -f "$_arcs_cache_dir/${_s}.tsv" ]; then
+            cat "$_arcs_cache_dir/${_s}.tsv"
+            return 0
+        fi
+    fi
+
+    return 1
 }
 
 _arcs_find_entry() {
@@ -178,36 +329,30 @@ _arcs_find_entry() {
     [ -z "$_s" ] && return 1
 
     _q_clean=$(printf '%s' "$_query" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//')
-
-    # 1. Exact match on slug
-    _match=$(arcs_list "$_title" | awk -F'\t' -v q="$_q_clean" '$1 == q { print $0; exit }')
-    if [ -n "$_match" ]; then
-        printf "%s\n" "$_match"
-        return 0
-    fi
-
-    # 2. Substring match on slug
-    _match=$(arcs_list "$_title" | awk -F'\t' -v q="$_q_clean" 'index($1, q) > 0 { print $0; exit }')
-    if [ -n "$_match" ]; then
-        printf "%s\n" "$_match"
-        return 0
-    fi
-
-    # 3. Case-insensitive substring match on arc name
     _q_lower=$(printf '%s' "$_query" | tr '[:upper:]' '[:lower:]')
-    _match=$(arcs_list "$_title" | awk -F'\t' -v q="$_q_lower" 'index(tolower($3), q) > 0 { print $0; exit }')
+
+    # Single pass fast matcher across columns 1 (slug), 2 (range), and 3 (name)
+    _match=$(arcs_list "$_title" | awk -F'\t' -v qc="$_q_clean" -v ql="$_q_lower" -v qr="$_query" '
+        $1 == qc { print; exit }
+        $2 == qr { print; exit }
+        index($1, qc) > 0 { print; exit }
+        index(tolower($3), ql) > 0 { print; exit }
+    ')
+
     if [ -n "$_match" ]; then
         printf "%s\n" "$_match"
         return 0
     fi
-
     return 1
 }
 
 arcs_get_range() {
     _entry=$(_arcs_find_entry "$1" "$2")
     if [ -n "$_entry" ]; then
-        printf "%s\n" "$_entry" | cut -f 2
+        IFS="$(printf '\t')" read -r _s _r _rest <<EOF
+$_entry
+EOF
+        printf "%s\n" "$_r"
         return 0
     fi
     return 1
@@ -216,7 +361,10 @@ arcs_get_range() {
 arcs_get_name() {
     _entry=$(_arcs_find_entry "$1" "$2")
     if [ -n "$_entry" ]; then
-        printf "%s\n" "$_entry" | cut -f 3
+        IFS="$(printf '\t')" read -r _s _r _n _rest <<EOF
+$_entry
+EOF
+        printf "%s\n" "$_n"
         return 0
     fi
     return 1
@@ -225,7 +373,10 @@ arcs_get_name() {
 arcs_get_synopsis() {
     _entry=$(_arcs_find_entry "$1" "$2")
     if [ -n "$_entry" ]; then
-        printf "%s\n" "$_entry" | cut -f 5
+        IFS="$(printf '\t')" read -r _s _r _n _c _syn <<EOF
+$_entry
+EOF
+        printf "%s\n" "$_syn"
         return 0
     fi
     return 1
@@ -248,45 +399,43 @@ arcs_print_summary() {
     printf "\033[1;35m╭────────────────────────────────────────────────────────────────────────╮\033[0m\n"
     printf "\033[1;35m│\033[0m \033[1;33m[STORY ARC MARATHON]\033[0m \033[1;37m%-48s\033[0m \033[1;35m│\033[0m\n" "$_name"
     printf "\033[1;35m├────────────────────────────────────────────────────────────────────────┤\033[0m\n"
-    printf "\033[1;35m│\033[0m \033[1;36mSeries:\033[0m    %-57s \033[1;35m│\033[0m\n" "$_title"
-        _start=$(printf "%s" "$_range" | cut -d'-' -f1)
+    _start=$(printf "%s" "$_range" | cut -d'-' -f1)
     _end=$(printf "%s" "$_range" | cut -d'-' -f2)
     printf "\033[1;35m│\033[0m \033[1;36mEpisodes:\033[0m  Episodes %s - %s (%s episodes total)\033[0m\n" "$_start" "$_end" "$_count"
-    printf "\033[1;35m│\033[0m \033[1;36mSynopsis:\033[0m  %-57s \033[1;35m│\033[0m\n" "$_synopsis"
+    printf "\033[1;35m│\033[0m \033[1;36mSynopsis:\033[0m   %-56s \033[1;35m│\033[0m\n" "$_synopsis"
     printf "\033[1;35m╰────────────────────────────────────────────────────────────────────────╯\033[0m\n"
-    return 0
 }
 
 arcs_choose_interactive() {
     _title="$1"
-    _menu_cmd="${2:-fzf}"
-    _menu_flags="${3:-}"
+    _menu="${2:-fzf}"
+    shift 2 2>/dev/null || true
+    _menu_opts="$*"
 
     if ! arcs_has_data "$_title"; then
-        printf "\033[1;33m[Story Arcs] No built-in arc registry found for '%s'.\033[0m\n" "$_title" >&2
+        printf "\033[1;33m[Story Arcs] No arc registry available for: %s\033[0m\n" "$_title" >&2
         return 1
     fi
 
-    _formatted=$(arcs_list "$_title" | awk -F'\t' '{ printf "%-10s  |  %-36s (%s eps)\n", $2, $3, $4 }')
-    
-    if command -v "$_menu_cmd" >/dev/null 2>&1; then
-        _picked=$(printf "%s\n" "$_formatted" | "$_menu_cmd" --prompt="Select Story Arc: " $_menu_flags)
-    else
-        printf "\nAvailable Story Arcs for %s:\n" "$_title"
-        printf "%s\n" "$_formatted" | nl -w 2 -s ') '
-        printf "Enter number or range: "
-        read -r _choice
-        if printf "%s" "$_choice" | grep -q '^[0-9]\+$'; then
-            _picked=$(printf "%s\n" "$_formatted" | sed -n "${_choice}p")
-        else
-            _picked="$_choice"
-        fi
+    _raw_list=$(arcs_list "$_title")
+    if [ -z "$_raw_list" ]; then
+        return 1
     fi
 
-    [ -z "$_picked" ] && return 1
+    _tab=$(printf '\t')
+    _formatted=""
+    while IFS="$_tab" read -r _slug _range _name _count _syn; do
+        [ -z "$_slug" ] && continue
+        _line=$(printf "%-12s | %-38s | %s eps | %s\n" "$_range" "$_name" "$_count" "$_syn")
+        _formatted="${_formatted}${_line}\n"
+    done <<EOF
+$_raw_list
+EOF
 
-    # Extract the episode range (e.g. 457-489)
-    _range=$(printf "%s" "$_picked" | awk '{print $1}' | tr -d '[:space:]')
-    printf "%s\n" "$_range"
-    return 0
+    _chosen=$(printf "%b" "$_formatted" | sed '/^$/d' | eval "$_menu" $_menu_opts)
+    if [ -n "$_chosen" ]; then
+        printf "%s\n" "$_chosen" | awk '{print $1}'
+        return 0
+    fi
+    return 1
 }
