@@ -585,8 +585,13 @@ hianime_m3u8() {
                 if [ -n "$_m3u8_master" ]; then
                     sub_link="$(printf "%s" "$_sources_json" | sed 's/.*"tracks":\[//; s/\].*//; s/},{/\n{/g' | grep -i '"default":true' | sed -nE 's/.*"file":"([^"]*)".*/\1/p' | head -n 1 | sed 's|\\/|/|g')"
                     [ -z "$sub_link" ] && sub_link="$(printf "%s" "$_sources_json" | sed 's/.*"tracks":\[//; s/\].*//; s/},{/\n{/g' | grep -i '"English"' | sed -nE 's/.*"file":"([^"]*)".*/\1/p' | head -n 1 | sed 's|\\/|/|g')"
-                    links="$(hianime_curl "$_m3u8_master" -e "$refr" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
-                    [ -z "$links" ] && links="1080p >$_m3u8_master"
+                    case "$_m3u8_master" in
+                        *index-*.m3u8*) links="1080p >$_m3u8_master" ;;
+                        *)
+                            links="$(hianime_curl "$_m3u8_master" -e "$refr" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
+                            [ -z "$links" ] && links="1080p >$_m3u8_master"
+                            ;;
+                    esac
                     if [ -n "$links" ]; then
                         return 0
                     fi
@@ -788,7 +793,7 @@ play_episode() {
         android_vlc) nohup am start --user 0 -a android.intent.action.VIEW -d "$video_link" -n org.videolan.vlc/org.videolan.vlc.gui.video.VideoPlayerActivity -e "title" "${anime_title} Episode ${ep_no}" $player_extra_flags >/dev/null 2>&1 & ;;
         *flatpak*mpv*) flatpak run io.mpv.Mpv --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} $skip_flag $player_extra_flags --force-media-title="${anime_title} Episode ${ep_no}" "$video_link" >/dev/null 2>&1 & ;;
         *mpv*)
-            _mpv_flags="--force-window=immediate --ytdl=no --cache=yes --demuxer-max-bytes=100M --demuxer-readahead-secs=20 --demuxer-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5"
+            _mpv_flags="--force-window=immediate --ytdl=no --hwdec=auto-safe --cache=yes --demuxer-max-bytes=150M --demuxer-readahead-secs=30 --demuxer-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5"
             case "$(uname -s 2>/dev/null)" in
                 *MINGW* | *MSYS* | *CYGWIN*) _mpv_flags="$_mpv_flags --no-terminal" ;;
             esac
@@ -837,7 +842,7 @@ play_episode() {
             if [ "$no_detach" = 0 ]; then
                 nohup $player_function --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} $skip_flag $_mpv_flags $_scrobble_hook $player_extra_flags --force-media-title="${anime_title} Episode ${ep_no}" "$video_link" >/dev/null 2>&1 &
                 _player_pid=$!
-                if [ "${enable_discord_rpc:-1}" = 1 ] && [ -f "$_lib_dir/discord.sh" ]; then
+                if [ "${enable_discord_rpc:-0}" = 1 ] && [ -f "$_lib_dir/discord.sh" ]; then
                     . "$_lib_dir/discord.sh" 2>/dev/null || true
                     discord_start_presence "$anime_title" "$ep_no" "$mode" "$_player_pid"
                 fi
@@ -1672,7 +1677,6 @@ done
 [ "$menu_program" = "fzf" ] && menu_multi_flag="-m"
 [ "$menu_program" = "rofi" ] && menu_multi_flag="-multi-select"
 
-info "Checking dependencies..."
 dep_ch "sed"
 dep_ch "grep"
 [ "$skip_intro" = 1 ] && (command -v ani-skip >/dev/null 2>&1 || die "Program ani-skip not found (required for --skip). Install it or disable skip_intro.")
