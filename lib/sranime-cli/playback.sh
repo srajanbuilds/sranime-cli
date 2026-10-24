@@ -170,6 +170,10 @@ playback_prepare_observer() {
     _lua_file="${_pos_trig}.lua"
     _clean_scrobble=$(printf "%s" "$_scrobble_trig" | sed 's|\\|/|g')
     _clean_pos=$(printf "%s" "$_pos_trig" | sed 's|\\|/|g')
+    if command -v cygpath >/dev/null 2>&1; then
+        _clean_scrobble=$(cygpath -m "$_scrobble_trig" 2>/dev/null || printf "%s" "$_clean_scrobble")
+        _clean_pos=$(cygpath -m "$_pos_trig" 2>/dev/null || printf "%s" "$_clean_pos")
+    fi
 
     cat << LUAEOF > "$_lua_file"
 -- sranime-cli unified MPV observer: 80% scrobble & timestamp position checkpoint

@@ -572,10 +572,13 @@ hianime_m3u8() {
 
     if echo "$_embed" | grep -q "megaplay"; then
         refr="https://megaplay.buzz/"
-        _embed_html="$(hianime_curl "$_embed" -H "Referer: https://hianime.at/")"
-        _player_id="$(printf "%s" "$_embed_html" | tr '\n' ' ' | sed -nE 's/.*id="megaplay-player"[^>]*data-id="([0-9]+)".*/\1/p')"
-        [ -z "$_player_id" ] && _player_id="$(printf "%s" "$_embed_html" | tr '\n' ' ' | sed -nE 's/.*id="megaplay-player"[^>]*data-realid="([0-9]+)".*/\1/p')"
-        [ -z "$_player_id" ] && _player_id="$(printf "%s" "$_embed_html" | sed -nE 's/.*data-id="([0-9]+)".*/\1/p' | head -n 1)"
+        _player_id="$(printf "%s" "$_embed" | sed -nE 's|.*/stream/[^/]+/([0-9]+).*|\1|p')"
+        if [ -z "$_player_id" ]; then
+            _embed_html="$(hianime_curl "$_embed" -H "Referer: https://hianime.at/")"
+            _player_id="$(printf "%s" "$_embed_html" | tr '\n' ' ' | sed -nE 's/.*id="megaplay-player"[^>]*data-id="([0-9]+)".*/\1/p')"
+            [ -z "$_player_id" ] && _player_id="$(printf "%s" "$_embed_html" | tr '\n' ' ' | sed -nE 's/.*id="megaplay-player"[^>]*data-realid="([0-9]+)".*/\1/p')"
+            [ -z "$_player_id" ] && _player_id="$(printf "%s" "$_embed_html" | sed -nE 's/.*data-id="([0-9]+)".*/\1/p' | head -n 1)"
+        fi
         if [ -n "$_player_id" ]; then
             _sources_json="$(hianime_curl "https://megaplay.buzz/stream/getSources?id=$_player_id" -H "Referer: $_embed" -H "X-Requested-With: XMLHttpRequest")"
             _enc="$(printf "%s" "$_sources_json" | sed -nE 's/.*"enc":"([^"]*)".*/\1/p')"
@@ -585,13 +588,13 @@ hianime_m3u8() {
                 if [ -n "$_m3u8_master" ]; then
                     sub_link="$(printf "%s" "$_sources_json" | sed 's/.*"tracks":\[//; s/\].*//; s/},{/\n{/g' | grep -i '"default":true' | sed -nE 's/.*"file":"([^"]*)".*/\1/p' | head -n 1 | sed 's|\\/|/|g')"
                     [ -z "$sub_link" ] && sub_link="$(printf "%s" "$_sources_json" | sed 's/.*"tracks":\[//; s/\].*//; s/},{/\n{/g' | grep -i '"English"' | sed -nE 's/.*"file":"([^"]*)".*/\1/p' | head -n 1 | sed 's|\\/|/|g')"
-                    case "$_m3u8_master" in
-                        *index-*.m3u8*) links="1080p >$_m3u8_master" ;;
-                        *)
-                            links="$(hianime_curl "$_m3u8_master" -e "$refr" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
-                            [ -z "$links" ] && links="1080p >$_m3u8_master"
-                            ;;
-                    esac
+                    if [ "${quality:-best}" = "best" ] || echo "$_m3u8_master" | grep -q "index-"; then
+                        links="1080p >$_m3u8_master"
+                    else
+                        _var_curl="$($curl_exe -sL -A "$agent" --max-time 3 -e "$refr" "$_m3u8_master" 2>/dev/null || true)"
+                        links="$(printf "%s\n" "$_var_curl" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
+                        [ -z "$links" ] && links="1080p >$_m3u8_master"
+                    fi
                     if [ -n "$links" ]; then
                         return 0
                     fi
@@ -618,7 +621,13 @@ hianime_m3u8() {
         sub_link=$(subtitles_extract_from_json "$_json" "${sub_lang:-en}")
     fi
     [ -z "$sub_link" ] && sub_link="$(printf "%s" "$_json" | sed 's|.*"subtitles":\[//; s/\].*//; s/},{/\n{/g' | grep -m 1 '"default":true' | sed -nE 's/.*"file":"([^"]*)".*/\1/p')"
-    links="$(hianime_curl "$_m3u8_master" -e "$refr" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
+    if [ "${quality:-best}" = "best" ] || echo "$_m3u8_master" | grep -q "index-"; then
+        links="1080p >$_m3u8_master"
+    else
+        _var_curl="$($curl_exe -sL -A "$agent" --max-time 3 -e "$refr" "$_m3u8_master" 2>/dev/null || true)"
+        links="$(printf "%s\n" "$_var_curl" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
+        [ -z "$links" ] && links="1080p >$_m3u8_master"
+    fi
     [ -n "$links" ]
 }
 
@@ -793,7 +802,7 @@ play_episode() {
         android_vlc) nohup am start --user 0 -a android.intent.action.VIEW -d "$video_link" -n org.videolan.vlc/org.videolan.vlc.gui.video.VideoPlayerActivity -e "title" "${anime_title} Episode ${ep_no}" $player_extra_flags >/dev/null 2>&1 & ;;
         *flatpak*mpv*) flatpak run io.mpv.Mpv --referrer="$refr" ${sub_link:+--sub-file="$sub_link"} $skip_flag $player_extra_flags --force-media-title="${anime_title} Episode ${ep_no}" "$video_link" >/dev/null 2>&1 & ;;
         *mpv*)
-            _mpv_flags="--force-window=immediate --ytdl=no --hwdec=auto-safe --cache=yes --demuxer-max-bytes=150M --demuxer-readahead-secs=30 --demuxer-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5"
+            _mpv_flags="--force-window=immediate --ytdl=no --hwdec=auto-safe --cache=yes --demuxer-max-bytes=250M --demuxer-readahead-secs=120 --user-agent=\"$agent\""
             case "$(uname -s 2>/dev/null)" in
                 *MINGW* | *MSYS* | *CYGWIN*) _mpv_flags="$_mpv_flags --no-terminal" ;;
             esac
@@ -831,7 +840,13 @@ play_episode() {
                 _scrobble_trig=$(make_temp 2>/dev/null || echo "/tmp/sranime_trig_$$")
                 _pos_trig=$(make_temp 2>/dev/null || echo "/tmp/sranime_pos_$$")
                 _scrobble_lua=$(playback_prepare_observer "$_scrobble_trig" "$_pos_trig" 2>/dev/null || true)
-                [ -n "$_scrobble_lua" ] && [ -f "$_scrobble_lua" ] && _scrobble_hook="--script=$_scrobble_lua"
+                if [ -n "$_scrobble_lua" ] && [ -f "$_scrobble_lua" ]; then
+                    if command -v cygpath >/dev/null 2>&1; then
+                        _scrobble_hook="--script=$(cygpath -w "$_scrobble_lua" 2>/dev/null || printf "%s" "$_scrobble_lua")"
+                    else
+                        _scrobble_hook="--script=$_scrobble_lua"
+                    fi
+                fi
             elif [ "${auto_scrobble:-1}" = 1 ] && [ -f "$_lib_dir/scrobbler.sh" ]; then
                 . "$_lib_dir/scrobbler.sh" 2>/dev/null || true
                 _scrobble_trig=$(make_temp 2>/dev/null || echo "/tmp/sranime_trig_$$")
@@ -1028,7 +1043,7 @@ mode="${SRANIME_CLI_MODE:-${mode:-sub}}"
 download_dir="${SRANIME_CLI_DOWNLOAD_DIR:-${download_dir:-.}}"
 log_episode="${SRANIME_CLI_LOG:-${log_episode:-1}}"
 quality="${SRANIME_CLI_QUALITY:-${quality:-best}}"
-enable_preview="${SRANIME_CLI_PREVIEW:-${enable_preview:-1}}"
+enable_preview="${SRANIME_CLI_PREVIEW:-${enable_preview:-0}}"
 auto_scrobble="${SRANIME_CLI_AUTO_SCROBBLE:-${auto_scrobble:-1}}"
 enable_discord_rpc="${SRANIME_CLI_DISCORD:-${enable_discord_rpc:-0}}"
 syncplay_room="${SRANIME_SYNCPLAY_ROOM:-WatchParty}"
