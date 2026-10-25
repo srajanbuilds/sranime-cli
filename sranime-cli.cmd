@@ -6,4 +6,4 @@ if not exist "%BASH_BIN%" set "BASH_BIN=%USERPROFILE%\scoop\apps\git\current\bin
 if not exist "%BASH_BIN%" (
   set "BASH_BIN=bash"
 )
-"%BASH_BIN%" "%~dp0sranime-cli" %*
+"%BASH_BIN%" --noprofile --norc "%~dp0sranime-cli" %*
