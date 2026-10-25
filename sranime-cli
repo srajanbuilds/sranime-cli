@@ -12,18 +12,11 @@ for _cand in "$_bin_dir/lib/sranime-cli" "/usr/local/lib/sranime-cli" "/usr/lib/
 done
 export SRANIME_LIB_DIR
 
-# Load core infrastructure (lazy-load feature modules on demand)
+# Load core infrastructure (feature modules lazy-loaded on demand)
 if [ -n "$SRANIME_LIB_DIR" ]; then
     . "$SRANIME_LIB_DIR/utils.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/providers.sh" 2>/dev/null || true
     . "$SRANIME_LIB_DIR/playback.sh" 2>/dev/null || true
-    . "$SRANIME_LIB_DIR/discovery.sh" 2>/dev/null || true
-    . "$SRANIME_LIB_DIR/theme_colors.sh" 2>/dev/null || true
-    . "$SRANIME_LIB_DIR/filler.sh" 2>/dev/null || true
-    . "$SRANIME_LIB_DIR/tui.sh" 2>/dev/null || true
-    . "$SRANIME_LIB_DIR/manga.sh" 2>/dev/null || true
-    . "$SRANIME_LIB_DIR/arcs.sh" 2>/dev/null || true
-    . "$SRANIME_LIB_DIR/party.sh" 2>/dev/null || true
 fi
 
 # UI
@@ -61,7 +54,7 @@ nth() {
     _prompt="$1"
     [ $# -ne 1 ] && _multi_flag="$2"
 
-    if [ "$menu_program" = "fzf" ] && [ "${enable_preview:-1}" = 1 ] && [ "$_prompt" = "Select anime: " ]; then
+    if [ "$menu_program" = "fzf" ] && [ "${enable_preview:-0}" = 1 ] && [ "$_prompt" = "Select anime: " ]; then
         _self_script="$0"
         _preview_cmd=""
         case "$(uname -s 2>/dev/null)" in
@@ -443,7 +436,7 @@ cleanup() {
 #shellcheck disable=SC2086
 hianime_curl() {
     _curl_status=0
-    _response="$($curl_exe -sL -A "$agent" --max-time 10 $cipher_flag \
+    _response="$($curl_exe -sL --compressed -A "$agent" --max-time 10 $cipher_flag \
         -w ' %{http_code}' "$@")" || _curl_status=$?
 
     _http_code=${_response##* }
@@ -530,8 +523,7 @@ _decrypt_megaplay() {
         3) _clean="${_clean}===" ;;
     esac
     if command -v openssl >/dev/null 2>&1; then
-        printf '%s' "$_clean" | openssl enc -d -base64 -A 2>/dev/null | \
-            openssl enc -d -aes-256-cbc \
+        printf '%s' "$_clean" | openssl enc -d -aes-256-cbc -a -A \
             -K 693f4c4d5441783051362c3a7d35305500000000000000000000000000000000 \
             -iv 57303b3237546f6155706c5f50252763 2>/dev/null
     elif command -v python >/dev/null 2>&1; then
@@ -562,11 +554,11 @@ except Exception:
 hianime_m3u8() {
     _ep_id=$(printf "%s" "$episode_maps" | sed -nE "s|^([0-9]+)\t${1}$|\1|p")
     #shellcheck disable=SC2059
-    _servers="$(hianime_curl "$(printf "$servers_api" "$_ep_id")" | sed 's|\\"|"|g; s|server-item|\nserver-item|g')"
+    _servers="$(hianime_curl "$(printf "$servers_api" "$_ep_id")" | sed -e 's|\\"|"|g' -e 's|server-item|\nserver-item|g')"
 
     # 1. Prefer active MegaPlay CDNs (HD-1, Vidstream-2)
-    _hash="$(printf "%s\n" "$_servers" | grep 'data-type="'"$2"'"' | grep -E 'data-server-name="(HD-1|Vidstream-2)' | sed -nE 's/.*data-hash="([^"]*)".*/\1/p' | head -n 1)"
-    [ -z "$_hash" ] && _hash="$(printf "%s\n" "$_servers" | grep 'data-type="'"$2"'"' | sed -nE 's/.*data-hash="([^"]*)".*/\1/p' | head -n 1)"
+    _hash="$(printf "%s\n" "$_servers" | sed -nE '/data-type="'"$2"'".*data-server-name="(HD-1|Vidstream-2)"/s/.*data-hash="([^"]*)".*/\1/p' | head -n 1)"
+    [ -z "$_hash" ] && _hash="$(printf "%s\n" "$_servers" | sed -nE '/data-type="'"$2"'"/s/.*data-hash="([^"]*)".*/\1/p' | head -n 1)"
     _embed="$(b64_decode "$_hash")"
     [ -z "$_embed" ] && return 1
 

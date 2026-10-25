@@ -193,9 +193,9 @@ format_episodes_with_watched() {
 
     _watched_eps=""
     if [ -f "$_watch_file" ] && [ -n "$_a_id" ]; then
-        _watched_eps=$(grep "	${_a_id}	" "$_watch_file" 2>/dev/null | cut -f 3 | sort -u || true)
+        _watched_eps=$(grep "	${_a_id}	" "$_watch_file" 2>/dev/null | cut -f 3 | tr '\n' ' ')
     elif [ -f "$_hist_file" ] && [ -n "$_a_id" ]; then
-        _watched_eps=$(grep "	${_a_id}	" "$_hist_file" 2>/dev/null | cut -f 1 | sort -u || true)
+        _watched_eps=$(grep "	${_a_id}	" "$_hist_file" 2>/dev/null | cut -f 1 | tr '\n' ' ')
     fi
 
     if [ -z "$_watched_eps" ]; then
@@ -203,12 +203,12 @@ format_episodes_with_watched() {
         return 0
     fi
 
+    _watched_pattern=" $_watched_eps "
     printf "%s\n" "$_e_list" | while IFS= read -r _ep || [ -n "$_ep" ]; do
         [ -z "$_ep" ] && continue
-        if printf "%s\n" "$_watched_eps" | grep -q "^${_ep}$" 2>/dev/null; then
-            printf "%s  ✓ [Watched]\n" "$_ep"
-        else
-            printf "%s\n" "$_ep"
-        fi
+        case "$_watched_pattern" in
+            *" $_ep "*) printf "%s  ✓ [Watched]\n" "$_ep" ;;
+            *) printf "%s\n" "$_ep" ;;
+        esac
     done
 }
