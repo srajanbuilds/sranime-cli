@@ -4,22 +4,24 @@
 
 # Normalize language names or codes to standard ISO 639-1 / 639-2 codes
 subtitles_normalize_lang() {
-    _raw=$(printf "%s" "$1" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
-    case "$_raw" in
-        en|eng|english) printf "en" ;;
-        es|spa|spanish|español|espanol) printf "es" ;;
-        fr|fra|fre|french|français|francais) printf "fr" ;;
-        de|deu|ger|german|deutsch) printf "de" ;;
-        it|ita|italian|italiano) printf "it" ;;
-        pt|por|portuguese|português|portugues) printf "pt" ;;
-        ar|ara|arabic|العربية) printf "ar" ;;
-        ru|rus|russian|русский) printf "ru" ;;
-        ja|jp|jpn|japanese|日本語) printf "ja" ;;
-        zh|zho|chi|chinese|中文) printf "zh" ;;
-        ko|kor|korean|한국어) printf "ko" ;;
-        hi|hin|hindi|हिन्दी) printf "hi" ;;
-        id|ind|indonesian|bahasa) printf "id" ;;
-        *) printf "%s" "$_raw" ;;
+    case "$1" in
+        [eE][nN]|[eE][nN][gG]|[eE][nN][gG][lL][iI][sS][hH]) printf "en" ;;
+        [eE][sS]|[sS][pP][aA]|[sS][pP][aA][nN][iI][sS][hH]|español|espanol|[eE][sS][pP][aA]ñol) printf "es" ;;
+        [fF][rR]|[fF][rR][aA]|[fF][rR][eE]|[fF][rR][eE][nN][cC][hH]|français|francais) printf "fr" ;;
+        [dD][eE]|[dD][eE][uU]|[gG][eE][rR]|[gG][eE][rR][mM][aA][nN]|[dD][eE][uU][tT][sS][cC][hH]) printf "de" ;;
+        [iI][tT]|[iI][tT][aA]|[iI][tT][aA][lL][iI][aA][nN]|[iI][tT][aA][lL][iI][aA][nN][oO]) printf "it" ;;
+        [pP][tT]|[pP][oO][rR]|[pP][oO][rR][tT][uU][gG][uU][eE][sS][eE]|português|portugues) printf "pt" ;;
+        [aA][rR]|[aA][rR][aA]|[aA][rR][aA][bB][iI][cC]|العربية) printf "ar" ;;
+        [rR][uU]|[rR][uU][sS]|[rR][uU][sS][sS][iI][aA][nN]|русский) printf "ru" ;;
+        [jJ][aA]|[jJ][pP]|[jJ][pP][nN]|[jJ][aA][pP][aA][nN][eE][sS][eE]|日本語) printf "ja" ;;
+        [zZ][hH]|[zZ][hH][oO]|[cC][hH][iI]|[cC][hH][iI][nN][eE][sS][eE]|中文) printf "zh" ;;
+        [kK][oO]|[kK][oO][rR]|[kK][oO][rR][eE][aA][nN]|한국어) printf "ko" ;;
+        [hH][iI]|[hH][iI][nN]|[hH][iI][nN][dD][iI]|हिन्दी) printf "hi" ;;
+        [iI][dD]|[iI][nN][dD]|[iI][nN][dD][oO][nN][eE][sS][iI][aA][nN]|bahasa) printf "id" ;;
+        *)
+            _raw=$(printf "%s" "$1" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+            printf "%s" "$_raw"
+            ;;
     esac
 }
 
@@ -29,15 +31,21 @@ subtitles_list_tracks_json() {
     _json="$1"
     [ -z "$_json" ] && return 1
 
-    (printf "%s" "$_json" | sed 's|.*"subtitles":\[||; s|\].*||; s|},{|}\n{|g'; printf "\n") | while IFS= read -r _item || [ -n "$_item" ]; do
+    (printf "%s" "$_json" | sed 's|.*"subtitles":\[||; s|\].*||; s|},{|\n{|g'; printf "\n") | while IFS= read -r _item || [ -n "$_item" ]; do
         [ -z "$_item" ] && continue
-        _lang=$(printf "%s" "$_item" | sed -nE 's|.*"lang":"([^"]*)".*|\1|p')
-        _src=$(printf "%s" "$_item" | sed -nE 's|.*"src":"([^"]*)".*|\1|p')
-        _def="0"
-        printf "%s" "$_item" | grep -q '"default":true' && _def="1"
-        if [ -n "$_lang" ] && [ -n "$_src" ]; then
-            printf "%s\t%s\t%s\n" "$_lang" "$_src" "$_def"
-        fi
+        case "$_item" in
+            *'"lang":'*'"src":'*)
+                _lang="${_item#*\"lang\":\"}"
+                _lang="${_lang%%\"*}"
+                _src="${_item#*\"src\":\"}"
+                _src="${_src%%\"*}"
+                _def="0"
+                case "$_item" in *'"default":true'*) _def="1" ;; esac
+                if [ -n "$_lang" ] && [ -n "$_src" ]; then
+                    printf "%s\t%s\t%s\n" "$_lang" "$_src" "$_def"
+                fi
+                ;;
+        esac
     done
 }
 

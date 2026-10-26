@@ -1800,8 +1800,7 @@ case "$source" in
         ;;
     history)
         backup_old_hist
-        anime_list=$(while read -r ep_no anime_id anime_title; do process_hist_entry & done <"$histfile")
-        wait
+        anime_list=$(while read -r ep_no anime_id anime_title; do process_hist_entry & done <"$histfile"; wait)
         [ -z "$anime_list" ] && die "No unwatched series in history!"
         [ -z "${index##*[!0-9]*}" ] && anime_id=$(printf "%s" "$anime_list" | nl -w 2 | sed 's/^[[:space:]]//' | nth "Select anime: " | cut -f 1)
         [ -z "${index##*[!0-9]*}" ] || anime_id=$(printf "%s" "$anime_list" | sed -n "${index}p" | cut -f 1)
@@ -1906,7 +1905,7 @@ while cmd=$(printf "next\nreplay\nprevious\nselect\nchange_quality\nquit" | nth 
         next) ep_no=$(printf "%s" "$ep_list" | sed -n "/^${ep_no}$/{n;p;}") 2>/dev/null ;;
         replay) video_link="$replay" ;;
         previous) ep_no=$(printf "%s" "$ep_list" | sed -n "/^${ep_no}$/{g;1!p;};h") 2>/dev/null ;;
-        select) ep_no=$(printf "%s" "$ep_list" | nth "Select episode: " "$menu_multi_flag") ;;
+        select) ep_no=$(printf "%s" "$ep_list" | nth "Select episode: " "$menu_multi_flag" | sed -e "s/[[:space:]]*✓[[:space:]]*\[Watched\]//g" -e "s/[[:space:]]*\[.*\]//g" -e "s/^Episode[[:space:]]*//g") ;;
         change_quality)
             new_quality="$(printf "%s" "$links" | menu "Select Quality: " "" "$menu_extra_flags" | cut -d ">" -f 1)"
             [ -z "$new_quality" ] && die "No quality selected"

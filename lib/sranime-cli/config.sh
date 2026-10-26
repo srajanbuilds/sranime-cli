@@ -14,7 +14,8 @@ validate_config() {
         esac
         case "$_line" in
             *=*)
-                _key=$(printf '%s' "$_line" | cut -d= -f1 | tr -d '[:space:]')
+                _key="${_line%%=*}"
+                _key=$(printf '%s' "$_key" | tr -d '[:space:]')
                 case "$_key" in
                     player|mode|quality|download_dir|menu_program|skip_intro|log_episode|\
                     player_extra_flags|menu_extra_flags|no_detach|exit_after_play|\
