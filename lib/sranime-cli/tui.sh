@@ -49,7 +49,7 @@ tui_render_dashboard() {
         _idx=1
         while IFS="	" read -r _title _ep _sec _fmt _pct _date; do
             [ -z "$_title" ] && continue
-            _pct_int=$(printf "%s" "$_pct" | cut -d. -f1)
+            _pct_int="${_pct%%.*}"
             [ -z "$_pct_int" ] && _pct_int=0
             # Visual progress bar (10 segments)
             _filled=$(( _pct_int / 10 ))
@@ -139,7 +139,7 @@ Choose action or press [Q] to quit: "
             _cp_file="${SRANIME_CLI_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sranime-cli}/checkpoints.tsv"
             if [ -f "$_cp_file" ]; then
                 _target_line=$(sed -n "${_choice}p" "$_cp_file")
-                _target_title=$(printf "%s" "$_target_line" | cut -f1)
+                _target_title="${_target_line%%	*}"
                 if [ -n "$_target_title" ]; then
                     printf "Resuming: %s...
 " "$_target_title"

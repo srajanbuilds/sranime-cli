@@ -95,14 +95,10 @@ preview_anime() {
     if [ -f "$_cache_tsv" ]; then
         _row=$(grep "^${_id}	" "$_cache_tsv" 2>/dev/null | head -n 1 || true)
         if [ -n "$_row" ]; then
-            _title=$(printf "%s" "$_row" | cut -f 2)
-            _jname=$(printf "%s" "$_row" | cut -f 3)
-            _type=$(printf "%s" "$_row" | cut -f 4)
-            _dur=$(printf "%s" "$_row" | cut -f 5)
-            _sub=$(printf "%s" "$_row" | cut -f 6)
-            _dub=$(printf "%s" "$_row" | cut -f 7)
-            _poster=$(printf "%s" "$_row" | cut -f 8)
-            _desc=$(printf "%s" "$_row" | cut -f 9)
+            _tab=$(printf '\t')
+            IFS="$_tab" read -r _dummy _title _jname _type _dur _sub _dub _poster _desc <<EOF
+$_row
+EOF
         fi
     fi
 

@@ -61,6 +61,18 @@ watchlog_show() {
     _shown=0
     _lower_filter=""
     [ -n "$_filter" ] && _lower_filter=$(printf "%s" "$_filter" | tr '[:upper:]' '[:lower:]')
+    _from_int=""
+    _to_int=""
+    case "$_filter" in
+        *..*)
+            _from="${_filter%%..*}"
+            _to="${_filter##*..}"
+            _f_yr="${_from%%-*}"; _f_rest="${_from#*-}"; _f_mo="${_f_rest%%-*}"; _f_dy="${_f_rest#*-}"
+            _from_int="${_f_yr}${_f_mo}${_f_dy}"
+            _t_yr="${_to%%-*}"; _t_rest="${_to#*-}"; _t_mo="${_t_rest%%-*}"; _t_dy="${_t_rest#*-}"
+            _to_int="${_t_yr}${_t_mo}${_t_dy}"
+            ;;
+    esac
     while IFS='	' read -r _ts _action _ep _id _title _prov; do
         [ -z "$_title" ] && continue
         if [ -n "$_filter" ]; then
@@ -83,12 +95,12 @@ watchlog_show() {
             # Date range matching: YYYY-MM-DD..YYYY-MM-DD (POSIX integer comparison)
             case "$_filter" in
                 *..*)
-                    _from="${_filter%%..*}"
-                    _to="${_filter##*..}"
                     _date="${_ts%% *}"
-                    _d_int=$(printf "%s" "$_date" | tr -d '-')
-                    _from_int=$(printf "%s" "$_from" | tr -d '-')
-                    _to_int=$(printf "%s" "$_to" | tr -d '-')
+                    _d_yr="${_date%%-*}"
+                    _d_rest="${_date#*-}"
+                    _d_mo="${_d_rest%%-*}"
+                    _d_dy="${_d_rest#*-}"
+                    _d_int="${_d_yr}${_d_mo}${_d_dy}"
                     _match=1
                     if [ -n "$_from_int" ] && [ "$_d_int" -lt "$_from_int" ] 2>/dev/null; then
                         _match=0

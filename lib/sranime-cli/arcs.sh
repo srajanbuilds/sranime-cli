@@ -434,7 +434,8 @@ EOF
 
     _chosen=$(printf "%b" "$_formatted" | sed '/^$/d' | eval "$_menu" $_menu_opts)
     if [ -n "$_chosen" ]; then
-        printf "%s\n" "$_chosen" | awk '{print $1}'
+        _range_sel="${_chosen%% *}"
+        printf "%s\n" "$_range_sel"
         return 0
     fi
     return 1

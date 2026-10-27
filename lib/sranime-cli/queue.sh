@@ -130,12 +130,10 @@ queue_process_next() {
     _next=$(queue_get_next)
     [ -z "$_next" ] && return 0
 
-    _qid=$(printf '%s' "$_next" | cut -f1)
-    _title=$(printf '%s' "$_next" | cut -f4)
-    _ep=$(printf '%s' "$_next" | cut -f5)
-    _qual=$(printf '%s' "$_next" | cut -f6)
-    _prov=$(printf '%s' "$_next" | cut -f7)
-    _out=$(printf '%s' "$_next" | cut -f8)
+    _tab=$(printf '\t')
+    IFS="$_tab" read -r _qid _status _prio _title _ep _qual _prov _out _rest <<EOF
+$_next
+EOF
 
     queue_set_status "$_qid" "DOWNLOADING"
     printf "\033[1;36m==> [Queue Worker]\033[0m Downloading %s Ep %s...\n" "$_title" "$_ep"

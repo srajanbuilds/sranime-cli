@@ -18,12 +18,18 @@ make_temp() {
 }
 
 semver_ge() {
-    _v1_major=$(printf '%s' "$1" | cut -d. -f1)
-    _v1_minor=$(printf '%s' "$1" | cut -d. -f2)
-    _v1_patch=$(printf '%s' "$1" | cut -d. -f3)
-    _v2_major=$(printf '%s' "$2" | cut -d. -f1)
-    _v2_minor=$(printf '%s' "$2" | cut -d. -f2)
-    _v2_patch=$(printf '%s' "$2" | cut -d. -f3)
+    _v1_major="${1%%.*}"
+    _v1_rem="${1#*.}"
+    _v1_minor="${_v1_rem%%.*}"
+    _v1_patch="${_v1_rem#*.}"
+    [ "$_v1_patch" = "$_v1_rem" ] && _v1_patch="0"
+
+    _v2_major="${2%%.*}"
+    _v2_rem="${2#*.}"
+    _v2_minor="${_v2_rem%%.*}"
+    _v2_patch="${_v2_rem#*.}"
+    [ "$_v2_patch" = "$_v2_rem" ] && _v2_patch="0"
+
     [ "$_v1_major" -gt "$_v2_major" ] && return 0
     [ "$_v1_major" -lt "$_v2_major" ] && return 1
     [ "$_v1_minor" -gt "$_v2_minor" ] && return 0
@@ -33,10 +39,9 @@ semver_ge() {
 
 truncate_str() {
     _str="$1"; _max="${2:-40}"
-    _len=$(printf '%s' "$_str" | wc -c | tr -d '[:space:]')
+    _len=${#_str}
     if [ "$_len" -gt "$_max" ]; then
-        printf '%s' "$_str" | cut -c "1-$((_max - 1))"
-        printf '...'
+        printf '%s...' "$(printf '%s' "$_str" | cut -c "1-$((_max - 1))")"
     else
         printf '%s' "$_str"
     fi

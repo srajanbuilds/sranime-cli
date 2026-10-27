@@ -43,18 +43,20 @@ playback_parse_time() {
 
     case "$_raw" in
         *:*:*)
-            _h=$(printf "%s" "$_raw" | cut -d: -f1)
-            _m=$(printf "%s" "$_raw" | cut -d: -f2)
-            _s=$(printf "%s" "$_raw" | cut -d: -f3)
+            _h="${_raw%%:*}"
+            _rem="${_raw#*:}"
+            _m="${_rem%%:*}"
+            _s="${_rem#*:}"
             printf "%d" "$(( (_h * 3600) + (_m * 60) + _s ))"
             ;;
         *:*)
-            _m=$(printf "%s" "$_raw" | cut -d: -f1)
-            _s=$(printf "%s" "$_raw" | cut -d: -f2)
+            _m="${_raw%%:*}"
+            _s="${_raw#*:}"
             printf "%d" "$(( (_m * 60) + _s ))"
             ;;
         *)
-            _int=$(printf "%s" "$_raw" | grep -o '^[0-9]\+' || echo 0)
+            _int="${_raw%%.*}"
+            case "$_int" in ''|*[!0-9]*) _int=0 ;; esac
             printf "%d" "${_int:-0}"
             ;;
     esac
@@ -85,8 +87,7 @@ playback_save_checkpoint() {
 
     # Append new checkpoint if position > 5 seconds
     if [ "${_clean_sec:-0}" -ge 5 ]; then
-        printf "%s	%s	%s	%s	%s	%s
-" "$_title" "$_ep" "$_clean_sec" "$_fmt_time" "$_percent" "$_now" >> "$_tmp"
+        printf "%s\t%s\t%s\t%s\t%s\t%s\n" "$_title" "$_ep" "$_clean_sec" "$_fmt_time" "$_percent" "$_now" >> "$_tmp"
     fi
 
     mv -f "$_tmp" "$_checkpoint_file" 2>/dev/null || cp -f "$_tmp" "$_checkpoint_file" 2>/dev/null || true
@@ -105,17 +106,16 @@ playback_get_checkpoint() {
     _entry=$(grep "^${_title}	" "$_checkpoint_file" 2>/dev/null | tail -n 1 || true)
     [ -z "$_entry" ] && return 1
 
-    _c_ep=$(printf "%s" "$_entry" | cut -f2)
-    _c_sec=$(printf "%s" "$_entry" | cut -f3)
-    _c_fmt=$(printf "%s" "$_entry" | cut -f4)
-    _c_pct=$(printf "%s" "$_entry" | cut -f5)
+    _tab=$(printf '\t')
+    IFS="$_tab" read -r _c_title _c_ep _c_sec _c_fmt _c_pct _c_date <<EOF
+$_entry
+EOF
 
     if [ -n "$_target_ep" ] && [ "$_target_ep" != "$_c_ep" ]; then
         return 1
     fi
 
-    printf "%s	%s	%s	%s
-" "$_c_ep" "$_c_sec" "$_c_fmt" "$_c_pct"
+    printf "%s\t%s\t%s\t%s\n" "$_c_ep" "$_c_sec" "$_c_fmt" "$_c_pct"
     return 0
 }
 

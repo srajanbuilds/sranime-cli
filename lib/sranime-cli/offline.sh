@@ -146,18 +146,24 @@ offline_play_file() {
         log_watch_event "$_show" "$_ep" "OFFLINE"
     fi
 
-    case "${player:-mpv}" in
+    case "${SRANIME_CLI_PLAYER:-${player:-mpv}}" in
+        debug)
+            printf "file=%s sub=%s ep=%s start=%s\n" "$_file" "$_sub_opt" "$_ep" "${_start_sec:-0}"
+            return 0
+            ;;
         mpv)
-            _cmd="mpv --force-media-title="${_show} - Ep ${_ep}""
-            [ -n "$_sub_opt" ] && _cmd="$_cmd --sub-file="$_sub_opt""
-            [ -n "$_start_sec" ] && [ "$_start_sec" -gt 0 ] && _cmd="$_cmd --start=$_start_sec"
-            eval "$_cmd "$_file""
+            set -- mpv "--force-media-title=${_show} - Ep ${_ep}"
+            [ -n "$_sub_opt" ] && set -- "$@" "--sub-file=$_sub_opt"
+            [ -n "$_start_sec" ] && [ "$_start_sec" -gt 0 ] && set -- "$@" "--start=$_start_sec"
+            set -- "$@" "$_file"
+            "$@"
             ;;
         vlc)
-            _cmd="vlc --meta-title="${_show} - Ep ${_ep}""
-            [ -n "$_sub_opt" ] && _cmd="$_cmd --sub-file="$_sub_opt""
-            [ -n "$_start_sec" ] && [ "$_start_sec" -gt 0 ] && _cmd="$_cmd --start-time=$_start_sec"
-            eval "$_cmd "$_file""
+            set -- vlc "--meta-title=${_show} - Ep ${_ep}"
+            [ -n "$_sub_opt" ] && set -- "$@" "--sub-file=$_sub_opt"
+            [ -n "$_start_sec" ] && [ "$_start_sec" -gt 0 ] && set -- "$@" "--start-time=$_start_sec"
+            set -- "$@" "$_file"
+            "$@"
             ;;
         *)
             if command -v mpv >/dev/null 2>&1; then

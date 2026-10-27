@@ -562,7 +562,8 @@ hianime_m3u8() {
     _embed="$(b64_decode "$_hash")"
     [ -z "$_embed" ] && return 1
 
-    if echo "$_embed" | grep -q "megaplay"; then
+    case "$_embed" in
+        *megaplay*)
         refr="https://megaplay.buzz/"
         _player_id="$(printf "%s" "$_embed" | sed -nE 's|.*/stream/[^/]+/([0-9]+).*|\1|p')"
         if [ -z "$_player_id" ]; then
@@ -580,20 +581,24 @@ hianime_m3u8() {
                 if [ -n "$_m3u8_master" ]; then
                     sub_link="$(printf "%s" "$_sources_json" | sed 's/.*"tracks":\[//; s/\].*//; s/},{/\n{/g' | grep -i '"default":true' | sed -nE 's/.*"file":"([^"]*)".*/\1/p' | head -n 1 | sed 's|\\/|/|g')"
                     [ -z "$sub_link" ] && sub_link="$(printf "%s" "$_sources_json" | sed 's/.*"tracks":\[//; s/\].*//; s/},{/\n{/g' | grep -i '"English"' | sed -nE 's/.*"file":"([^"]*)".*/\1/p' | head -n 1 | sed 's|\\/|/|g')"
-                    if [ "${quality:-best}" = "best" ] || echo "$_m3u8_master" | grep -q "index-"; then
-                        links="1080p >$_m3u8_master"
-                    else
-                        _var_curl="$($curl_exe -sL -A "$agent" --max-time 3 -e "$refr" "$_m3u8_master" 2>/dev/null || true)"
-                        links="$(printf "%s\n" "$_var_curl" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
-                        [ -z "$links" ] && links="1080p >$_m3u8_master"
-                    fi
+                    case "${quality:-best}:${_m3u8_master}" in
+                        best:*|*:*index-*)
+                            links="1080p >$_m3u8_master"
+                            ;;
+                        *)
+                            _var_curl="$($curl_exe -sL -A "$agent" --max-time 3 -e "$refr" "$_m3u8_master" 2>/dev/null || true)"
+                            links="$(printf "%s\n" "$_var_curl" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
+                            [ -z "$links" ] && links="1080p >$_m3u8_master"
+                            ;;
+                    esac
                     if [ -n "$links" ]; then
                         return 0
                     fi
                 fi
             fi
         fi
-    fi
+            ;;
+    esac
 
     # 2. Fallback to ZokoAnime embed
     _hash_zoko="$(printf "%s\n" "$_servers" | sed -nE 's|.*data-type="'"$2"'".*data-server-name="ZokoAnime".*data-hash="([^"]*)".*|\1|p' | head -n 1)"
@@ -613,13 +618,16 @@ hianime_m3u8() {
         sub_link=$(subtitles_extract_from_json "$_json" "${sub_lang:-en}")
     fi
     [ -z "$sub_link" ] && sub_link="$(printf "%s" "$_json" | sed 's|.*"subtitles":\[//; s/\].*//; s/},{/\n{/g' | grep -m 1 '"default":true' | sed -nE 's/.*"file":"([^"]*)".*/\1/p')"
-    if [ "${quality:-best}" = "best" ] || echo "$_m3u8_master" | grep -q "index-"; then
-        links="1080p >$_m3u8_master"
-    else
-        _var_curl="$($curl_exe -sL -A "$agent" --max-time 3 -e "$refr" "$_m3u8_master" 2>/dev/null || true)"
-        links="$(printf "%s\n" "$_var_curl" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
-        [ -z "$links" ] && links="1080p >$_m3u8_master"
-    fi
+    case "${quality:-best}:${_m3u8_master}" in
+        best:*|*:*index-*)
+            links="1080p >$_m3u8_master"
+            ;;
+        *)
+            _var_curl="$($curl_exe -sL -A "$agent" --max-time 3 -e "$refr" "$_m3u8_master" 2>/dev/null || true)"
+            links="$(printf "%s\n" "$_var_curl" | sed 's|^#EXT-X-STREAM.*x||g; s|,.*|p|g; /^#/d; $!N; s|\n| >|;/EXT-X-I-FRAME/d' | sed "\|>https*://|!s|>|>${_m3u8_master%/*}/|" | sort -g -r -s)"
+            [ -z "$links" ] && links="1080p >$_m3u8_master"
+            ;;
+    esac
     [ -n "$links" ]
 }
 
@@ -631,7 +639,7 @@ select_quality() {
     esac
     [ -z "$_result" ] && printf "\33[2K\r\033[1;33m%s\033[0m\n" "$1 not found, defaulting to best" >&2 && _result=$(printf "%s" "$links" | head -n 1)
 
-    video_link=$(printf "%s" "$_result" | cut -d ">" -f 2)
+    video_link="${_result#*>}"
 }
 
 # gets embed url, collects direct links and selects one with desired quality into $episode
