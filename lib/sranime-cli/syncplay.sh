@@ -33,6 +33,8 @@ syncplay_launch() {
         *MINGW* | *MSYS*)
             if command -v syncplay.exe >/dev/null 2>&1; then
                 _syncplay_bin="syncplay.exe"
+            elif [ -x "/c/Program Files/Syncplay/Syncplay.exe" ]; then
+                _syncplay_bin="/c/Program Files/Syncplay/Syncplay.exe"
             elif [ -x "/c/Program Files (x86)/Syncplay/Syncplay.exe" ]; then
                 _syncplay_bin="/c/Program Files (x86)/Syncplay/Syncplay.exe"
             fi

@@ -165,7 +165,7 @@ themes_download_track() {
     if command -v aria2c >/dev/null 2>&1; then
         aria2c -c -x 16 -s 16 -o "$_filename" "$_url"
     else
-        curl -sL "$_url" -o "$_filename"
+        curl -sL --max-time 15 "$_url" -o "$_filename"
     fi
 }
 
@@ -188,35 +188,33 @@ themes_interactive() {
 " "$_query"; return 1; }
 
     _anime_list=$(themes_parse_anime_list "$_json")
-    [ -z "$_anime_list" ] && { printf "No matching anime found.
-"; return 1; }
+    [ -z "$_anime_list" ] && { printf "No matching anime found.\n"; return 1; }
 
-    _selected_anime=$(printf "%s
-" "$_anime_list" | menu "Select anime: ")
+    _selected_anime=$(printf "%s\n" "$_anime_list" | menu "Select anime: ")
     [ -z "$_selected_anime" ] && return 0
 
-    _slug=$(printf "%s" "$_selected_anime" | cut -f2)
-    _tracks=$(themes_extract_tracks "$_json" "$_type_filter" "$_slug")
-    [ -z "$_tracks" ] && { printf "No matching tracks found for this anime.
-"; return 1; }
+    _tab=$(printf '\t')
+    _slug="${_selected_anime#*$_tab}"
+    _slug="${_slug%%$_tab*}"
 
-    _selected_track=$(printf "%s
-" "$_tracks" | menu "Select theme song: ")
+    _tracks=$(themes_extract_tracks "$_json" "$_type_filter" "$_slug")
+    [ -z "$_tracks" ] && { printf "No matching tracks found for this anime.\n"; return 1; }
+
+    _selected_track=$(printf "%s\n" "$_tracks" | menu "Select theme song: ")
     [ -z "$_selected_track" ] && return 0
 
-    _video_url=$(printf "%s" "$_selected_track" | cut -f2)
-    _track_title=$(printf "%s" "$_selected_track" | cut -f4)
-    [ -z "$_track_title" ] && _track_title=$(printf "%s" "$_selected_track" | cut -f3)
+    IFS="$_tab" read -r _t_disp _video_url _t_type _track_title _rest <<EOF
+$_selected_track
+EOF
+    [ -z "$_track_title" ] && _track_title="$_t_type"
 
     if [ "$_download_mode" = "1" ]; then
         _clean_title=$(printf "%s" "$_track_title" | tr -d '":/\*?<>|' | tr ' ' '_')
         _out_file="${_clean_title}.webm"
-        printf "Downloading theme: %s -> %s
-" "$_track_title" "$_out_file"
+        printf "Downloading theme: %s -> %s\n" "$_track_title" "$_out_file"
         themes_download_track "$_video_url" "$_out_file"
     else
-        printf "Playing theme: %s
-" "$_track_title"
+        printf "Playing theme: %s\n" "$_track_title"
         themes_play_track "$_video_url" "$_track_title" "$_is_audio_only"
     fi
 }

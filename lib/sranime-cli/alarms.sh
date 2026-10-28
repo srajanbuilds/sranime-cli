@@ -116,17 +116,12 @@ alarms_notify() {
     [ -z "$_matches" ] && return 0
 
     _count=0
-    printf "%s
-" "$_matches" | while IFS= read -r _row || [ -n "$_row" ]; do
-        [ -z "$_row" ] && continue
-        _title=$(printf "%s" "$_row" | cut -f2)
-        _ep=$(printf "%s" "$_row" | cut -f3)
-        _time=$(printf "%s" "$_row" | cut -f5)
-        _img=$(printf "%s" "$_row" | cut -f6)
+    _tab=$(printf '\t')
+    printf "%s\n" "$_matches" | while IFS="$_tab" read -r _id _title _ep _stat _time _img _rest || [ -n "$_title" ]; do
+        [ -z "$_title" ] && continue
 
         if [ "${SRANIME_CLI_PLAYER:-$player}" = "debug" ]; then
-            printf "DEBUG_ALARM_NOTIFY: title=%s ep=%s time=%s
-" "$_title" "$_ep" "$_time"
+            printf "DEBUG_ALARM_NOTIFY: title=%s ep=%s time=%s\n" "$_title" "$_ep" "$_time"
         else
             if command -v notify-send >/dev/null 2>&1; then
                 notify-send -i "video-television" "Anime Airing Alert" "${_title} Episode ${_ep} airs in ${_time}!"
@@ -143,33 +138,22 @@ alarms_notify() {
 # Display a customized airing calendar containing only user's anime
 alarms_calendar_mine() {
     _window_hours="${1:-48}"
-    printf "====================================================
-"
-    printf "  My Simulcast Airing Radar (Next %dh)
-" "$_window_hours"
-    printf "====================================================
-"
+    printf "====================================================\n"
+    printf "  My Simulcast Airing Radar (Next %dh)\n" "$_window_hours"
+    printf "====================================================\n"
 
     _matches=$(alarms_check_upcoming "$_window_hours")
     if [ -z "$_matches" ]; then
-        printf "No shows from your watchlist airing in the next %d hours.
-" "$_window_hours"
+        printf "No shows from your watchlist airing in the next %d hours.\n" "$_window_hours"
         return 0
     fi
 
-    printf "%-32s  %-8s  %-10s
-" "Anime Title" "Episode" "Airing In"
-    printf -- "----------------------------------------------------
-"
-    printf "%s
-" "$_matches" | while IFS= read -r _row || [ -n "$_row" ]; do
-        [ -z "$_row" ] && continue
-        _title=$(printf "%s" "$_row" | cut -f2)
-        _ep=$(printf "%s" "$_row" | cut -f3)
-        _time=$(printf "%s" "$_row" | cut -f5)
-        printf "%-32.32s  Ep %-5s  in %-10s
-" "$_title" "$_ep" "$_time"
+    printf "%-32s  %-8s  %-10s\n" "Anime Title" "Episode" "Airing In"
+    printf -- "----------------------------------------------------\n"
+    _tab=$(printf '\t')
+    printf "%s\n" "$_matches" | while IFS="$_tab" read -r _id _title _ep _stat _time _img _rest || [ -n "$_title" ]; do
+        [ -z "$_title" ] && continue
+        printf "%-32.32s  Ep %-5s  in %-10s\n" "$_title" "$_ep" "$_time"
     done
-    printf "====================================================
-"
+    printf "====================================================\n"
 }

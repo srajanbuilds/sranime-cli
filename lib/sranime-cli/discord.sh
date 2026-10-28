@@ -17,7 +17,7 @@ discord_find_pipe() {
             # Windows Named Pipe
             _i=0
             while [ "$_i" -le 9 ]; do
-                _pipe="\\.\pipe\discord-ipc-$_i"
+                _pipe='\\.\pipe\discord-ipc-'$_i
                 # Check pipe existence via powershell or test if available
                 if [ -e "$_pipe" ] 2>/dev/null; then
                     printf "%s" "$_pipe"
@@ -144,7 +144,7 @@ discord_start_presence() {
                 sleep 5
             done
             # Clear Activity
-            _clear='{"cmd":"SET_ACTIVITY","args":{"pid":'$_player_pid',"activity":null},"nonce":"clear"}'
+            _clear="{\"cmd\":\"SET_ACTIVITY\",\"args\":{\"pid\":${_player_pid},\"activity\":null},\"nonce\":\"clear\"}"
             discord_send_payload "$_pipe" 1 "$_clear" 2>/dev/null || true
         fi
     ) >/dev/null 2>&1 &

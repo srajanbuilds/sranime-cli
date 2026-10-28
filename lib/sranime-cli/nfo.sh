@@ -39,20 +39,17 @@ nfo_generate_tvshow() {
   <studio>$_studio</studio>
 NFOEOF
 
-    [ -n "$_year" ] && printf "  <year>%s</year>
-" "$_year" >> "$_nfo_file"
+    [ -n "$_year" ] && printf "  <year>%s</year>\n" "$_year" >> "$_nfo_file"
 
     # Write genres
     IFS=','
     for g in $_genres; do
         _cg=$(printf '%s' "$g" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-        [ -n "$_cg" ] && printf "  <genre>%s</genre>
-" "$_cg" >> "$_nfo_file"
+        [ -n "$_cg" ] && printf "  <genre>%s</genre>\n" "$_cg" >> "$_nfo_file"
     done
     unset IFS
 
-    [ -n "$_score" ] && printf "  <rating>%s</rating>
-" "$_score" >> "$_nfo_file"
+    [ -n "$_score" ] && printf "  <rating>%s</rating>\n" "$_score" >> "$_nfo_file"
 
     cat << NFOEOF >> "$_nfo_file"
   <status>Continuing</status>

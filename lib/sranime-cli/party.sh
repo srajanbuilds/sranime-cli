@@ -195,11 +195,8 @@ party_status() {
     _ep="1"
 
     if [ -f "$_party_meta_file" ]; then
-        _line=$(head -n 1 "$_party_meta_file" 2>/dev/null)
-        _port=$(printf "%s" "$_line" | cut -f 2)
-        _ip=$(printf "%s" "$_line" | cut -f 3)
-        _title=$(printf "%s" "$_line" | cut -f 4)
-        _ep=$(printf "%s" "$_line" | cut -f 5)
+        _tab=$(printf '\t')
+        IFS="$_tab" read -r _m_room _port _ip _title _ep _rest < "$_party_meta_file"
     fi
 
     _url="http://${_ip}:${_port}"

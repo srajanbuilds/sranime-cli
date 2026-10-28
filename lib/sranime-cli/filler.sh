@@ -163,8 +163,7 @@ filler_enrich_episode_list() {
     [ -z "$_ep_list" ] && return 1
     _slug=$(filler_slugify "$_anime_title")
 
-    printf "%s
-" "$_ep_list" | while IFS= read -r _ep || [ -n "$_ep" ]; do
+    printf "%s\n" "$_ep_list" | while IFS= read -r _ep || [ -n "$_ep" ]; do
         [ -z "$_ep" ] && continue
         _status=$(filler_get_episode_status "$_anime_title" "$_ep" "$_slug")
         
@@ -174,8 +173,7 @@ filler_enrich_episode_list() {
         fi
 
         _badge=$(filler_format_badge "$_status")
-        printf "%s	Episode %s%s
-" "$_ep" "$_ep" "$_badge"
+        printf "%s\tEpisode %s%s\n" "$_ep" "$_ep" "$_badge"
     done
 }
 

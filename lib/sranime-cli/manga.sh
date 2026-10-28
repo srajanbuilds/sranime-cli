@@ -353,8 +353,10 @@ manga_interactive() {
     _selected_manga=$(printf "%s\n" "$_manga_list" | menu "Select Manga Series: ")
     [ -z "$_selected_manga" ] && return 0
 
-    _manga_id=$(printf "%s" "$_selected_manga" | cut -f2)
-    _manga_title=$(printf "%s" "$_selected_manga" | cut -f3)
+    _tab=$(printf '\t')
+    IFS="$_tab" read -r _m_disp _manga_id _manga_title _rest <<EOF
+$_selected_manga
+EOF
 
     printf "Fetching chapters for %s...\n" "$_manga_title"
     _chapters=$(manga_list_chapters "$_manga_id" "${manga_lang:-en}")
@@ -363,8 +365,9 @@ manga_interactive() {
     _selected_ch=$(printf "%s\n" "$_chapters" | menu "Select Chapter: ")
     [ -z "$_selected_ch" ] && return 0
 
-    _chapter_id=$(printf "%s" "$_selected_ch" | cut -f2)
-    _ch_num=$(printf "%s" "$_selected_ch" | cut -f4)
+    IFS="$_tab" read -r _ch_disp _chapter_id _ch_title _ch_num _rest <<EOF
+$_selected_ch
+EOF
 
     manga_read_chapter "$_chapter_id" "$_manga_title" "$_ch_num"
 }

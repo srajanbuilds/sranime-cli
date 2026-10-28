@@ -40,9 +40,9 @@ cast_stream() {
     printf "\033[1;32m==> Casting to %s: %s\033[0m\n" "${_device:-Default Cast Device}" "$_title"
     # Execute in background or foreground
     if [ -n "$_device" ]; then
-        catt -d "$_device" cast ${sub_file:+-s "$_sub_file"} "$_url"
+        catt -d "$_device" cast ${_sub_file:+-s "$_sub_file"} "$_url"
     else
-        catt cast ${sub_file:+-s "$_sub_file"} "$_url"
+        catt cast ${_sub_file:+-s "$_sub_file"} "$_url"
     fi
 }
 

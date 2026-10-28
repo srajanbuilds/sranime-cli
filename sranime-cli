@@ -387,7 +387,7 @@ version_info() {
 
 update_script() {
     info "[branch:$branch] Checking for updates..."
-    update="$($curl_exe --fail-with-body -sL -A "$agent" "https://raw.githubusercontent.com/srajanbuilds/sranime-cli/$branch/sranime-cli" 2>/dev/null)" || die "Failed to connect to update server"
+    update="$($curl_exe --fail-with-body -sL --max-time 10 -A "$agent" "https://raw.githubusercontent.com/srajanbuilds/sranime-cli/$branch/sranime-cli" 2>/dev/null)" || die "Failed to connect to update server"
     new_version="$(printf "%s" "$update" | sed -nE 's|^version_number="([^"]+)"$|\1|p')"
     [ -z "$new_version" ] && die "Failed to retrieve remote version"
 
@@ -659,7 +659,7 @@ get_video_link() {
 time_until_next_ep() {
     animeschedule="https://animeschedule.net"
     _query="$(printf "%s" "$*" | tr ' ' '+')"
-    $curl_exe -s -G "$animeschedule/api/v3/anime" --data "q=${_query}" | sed 's|},{"id"|\n|g' | while read -r _entry; do
+    $curl_exe -s --max-time 10 -G "$animeschedule/api/v3/anime" --data "q=${_query}" | sed 's|},{"id"|\n|g' | while read -r _entry; do
         _route=$(printf "%s" "$_entry" | sed -nE 's|.*"route":"([^"]*)",.*|\1|p')
         _eng_title=$(printf '%s' "$_entry" | sed -nE 's|.*"english":"([^"]*)".*|\1|p')
         [ -z "$_eng_title" ] && _eng_title=$(printf '%s' "$_entry" | sed -nE 's|.*,"title":"([^"]*)".*|\1|p')
@@ -680,7 +680,7 @@ time_until_next_ep() {
         printf "Status: \033[1;%sm%s\033[0m\n" "$_color" "$_status"
 
         if [ "$_status" != "Finished" ]; then
-            _page="$($curl_exe -s "$animeschedule/anime/$_route")"
+            _page="$($curl_exe -s --max-time 10 "$animeschedule/anime/$_route")"
             _sub_ep=$(printf "%s" "$_page" | sed -nE 's|.*release-time-type-subs"[^>]*><span class="release-time-episode-number">Episode ([0-9]+)</span>.*|\1|p' | head -n 1)
             _dub_ep=$(printf "%s" "$_page" | sed -nE 's|.*release-time-type-dub"[^>]*><span class="release-time-episode-number">Episode ([0-9]+)</span>.*|\1|p' | head -n 1)
             _sub_countdown=$(printf "%s" "$_page" | sed -nE 's|.*class="countdown-time" datetime="([^"]*)".*|\1|p' | head -n 1)
@@ -889,9 +889,8 @@ play_episode() {
                 fi
                 if [ -n "$_pos_trig" ]; then
                     if [ -s "$_pos_trig" ]; then
-                        _pos_line=$(cat "$_pos_trig" | head -n 1)
-                        _pos_val=$(printf "%s" "$_pos_line" | cut -f1)
-                        _pos_pct=$(printf "%s" "$_pos_line" | cut -f2)
+                        _tab=$(printf '\t')
+                        IFS="$_tab" read -r _pos_val _pos_pct _rest < "$_pos_trig"
                         if [ "$_pos_val" = "EOF" ] || [ "${_pos_pct:-0}" = "100" ]; then
                             playback_clear_checkpoint "$anime_title" 2>/dev/null || true
                         elif [ -n "$_pos_val" ] && [ "$_pos_val" -gt 5 ] 2>/dev/null; then
@@ -948,7 +947,7 @@ play() {
         _range="$_parsed_range"
         [ "$player_function" = "download" ] && command -v download_batch_summary >/dev/null 2>&1 && download_batch_summary "$_range"
         for i in $_range; do
-            tput clear 2>/dev/null || true
+            [ -t 1 ] && command -v tput >/dev/null 2>&1 && tput clear 2>/dev/null || true
             ep_no=$i
             info "Processing episode $ep_no of $anime_title..."
             play_episode
@@ -970,7 +969,7 @@ play() {
         _range=$(printf "%s\n" "$ep_list" | sed -nE "/^${_start}\$/,/^${_end}\$/p")
         [ -z "$_range" ] && die "Invalid range!"
         for i in $_range; do
-            tput clear
+            [ -t 1 ] && command -v tput >/dev/null 2>&1 && tput clear 2>/dev/null || true
             ep_no=$i
             info "Playing episode $ep_no..."
             [ "$i" = "$_end" ] && unset _range
@@ -1020,7 +1019,7 @@ play() {
         fi
     fi
     # moves up to stored position and deletes to end
-    [ "$player_function" != "debug" ] && [ "$player_function" != "download" ] && tput rc && tput ed
+    [ "$player_function" != "debug" ] && [ "$player_function" != "download" ] && [ -t 1 ] && command -v tput >/dev/null 2>&1 && tput rc 2>/dev/null && tput ed 2>/dev/null || true
 }
 
 # MAIN
@@ -1077,7 +1076,7 @@ case "$(uname -a | cut -d " " -f 1,3-)" in
         player_function="${SRANIME_CLI_PLAYER:-${player:-$(dep_ch_failover "iina,/Applications/IINA.app/Contents/MacOS/iina-cli,mpv,vlc")}}" || die 'No player found. Looked for iina, mpv and vlc'
         ;;                                                            # mac OS
     *ndroid*) player_function="${SRANIME_CLI_PLAYER:-${player:-android_mpv}}" ;;     # Android OS (termux)
-    *MINGW* | *WSL2*) player_function="${SRANIME_CLI_PLAYER:-${player:-mpv.exe}}" ;; # Windows OS
+    *MINGW* | *WSL2*) player_function="${SRANIME_CLI_PLAYER:-${player:-$(dep_ch_failover "mpv.exe,mpv,vlc.exe,vlc")}}" ;; # Windows OS
     *ish*)
         player_function="${SRANIME_CLI_PLAYER:-${player:-iSH}}"
         curl_exe=$(dep_ch_failover "curl_safari260_ios,$curl_exe")
@@ -1915,7 +1914,9 @@ while cmd=$(printf "next\nreplay\nprevious\nselect\nchange_quality\nquit" | nth 
         previous) ep_no=$(printf "%s" "$ep_list" | sed -n "/^${ep_no}$/{g;1!p;};h") 2>/dev/null ;;
         select) ep_no=$(printf "%s" "$ep_list" | nth "Select episode: " "$menu_multi_flag" | sed -e "s/[[:space:]]*✓[[:space:]]*\[Watched\]//g" -e "s/[[:space:]]*\[.*\]//g" -e "s/^Episode[[:space:]]*//g") ;;
         change_quality)
-            new_quality="$(printf "%s" "$links" | menu "Select Quality: " "" "$menu_extra_flags" | cut -d ">" -f 1)"
+            _raw_quality=$(printf "%s" "$links" | menu "Select Quality: " "" "$menu_extra_flags")
+            new_quality="${_raw_quality%%>*}"
+            new_quality="${new_quality%% }"
             [ -z "$new_quality" ] && die "No quality selected"
             select_quality "$new_quality"
             ;;

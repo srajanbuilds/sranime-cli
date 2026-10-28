@@ -143,7 +143,7 @@ download_stream() {
             fi
             ;;
         *)
-            if curl -C - -sL \
+            if curl --connect-timeout 10 -C - -sL \
                 -A "$_agent" \
                 -e "$_refr" \
                 -o "$_target_file" \
