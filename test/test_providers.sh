@@ -13,6 +13,8 @@ printf "\033[1;36mRunning providers module tests...\033[0m\n"
 # Test 1: list_providers output
 list_out=$(list_providers)
 assert_contains "list_providers outputs hianime" "$list_out" "hianime"
+assert_contains "list_providers outputs aniwatch" "$list_out" "aniwatch"
+assert_contains "list_providers outputs 9anime" "$list_out" "9anime"
 assert_contains "list_providers outputs allanime" "$list_out" "allanime"
 assert_contains "list_providers outputs gogo" "$list_out" "gogo"
 
@@ -31,5 +33,11 @@ assert_eq "default active provider is hianime" "hianime" "$ACTIVE_PROVIDER"
 
 ACTIVE_PROVIDER="allanime"
 assert_eq "active provider can be switched to allanime" "allanime" "$ACTIVE_PROVIDER"
+
+ACTIVE_PROVIDER="aniwatch"
+assert_eq "active provider can be switched to aniwatch" "aniwatch" "$ACTIVE_PROVIDER"
+
+ACTIVE_PROVIDER="9anime"
+assert_eq "active provider can be switched to 9anime" "9anime" "$ACTIVE_PROVIDER"
 
 print_test_summary

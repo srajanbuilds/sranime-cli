@@ -17,7 +17,7 @@ if [ -z "$PROVIDERS_DIR" ]; then
 fi
 export PROVIDERS_DIR
 
-AVAILABLE_PROVIDERS="hianime allanime gogo"
+AVAILABLE_PROVIDERS="hianime aniwatch 9anime allanime gogo"
 ACTIVE_PROVIDER="${SRANIME_CLI_PROVIDER:-hianime}"
 
 load_provider() {
@@ -38,6 +38,13 @@ provider_search() {
 
     # 1. Try active provider
     case "$ACTIVE_PROVIDER" in
+        aniwatch)
+            _results=$(hianime_search "$_query" 2>/dev/null)
+            ;;
+        9anime)
+            load_provider "allanime"
+            _results=$(allanime_search "$_query" 2>/dev/null)
+            ;;
         allanime)
             load_provider "allanime"
             _results=$(allanime_search "$_query" 2>/dev/null)
@@ -73,6 +80,8 @@ provider_search() {
             allanime) _results=$(allanime_search "$_query" 2>/dev/null) ;;
             gogo)     _results=$(gogo_search "$_query" 2>/dev/null) ;;
             hianime)  _results=$(hianime_search "$_query" 2>/dev/null) ;;
+            aniwatch) _results=$(hianime_search "$_query" 2>/dev/null) ;;
+            9anime)   _results=$(allanime_search "$_query" 2>/dev/null) ;;
         esac
 
         if [ -n "$_results" ]; then
@@ -92,6 +101,13 @@ provider_search() {
 provider_episodes() {
     _id="$1"
     case "$ACTIVE_PROVIDER" in
+        aniwatch)
+            hianime_episodes "$_id"
+            ;;
+        9anime)
+            load_provider "allanime"
+            allanime_episodes "$_id"
+            ;;
         allanime)
             load_provider "allanime"
             allanime_episodes "$_id"
@@ -112,6 +128,8 @@ check_provider_health() {
     _p="$1"
     case "$_p" in
         hianime)  curl -sI --max-time 3 "https://hianime.at" >/dev/null 2>&1 ;;
+        aniwatch) curl -sI --max-time 3 "https://aniwatchtv.to" >/dev/null 2>&1 ;;
+        9anime)   curl -sI --max-time 3 "https://aniwave.to" >/dev/null 2>&1 ;;
         allanime) curl -sI --max-time 3 "https://api.allanime.day" >/dev/null 2>&1 ;;
         gogo)     curl -sI --max-time 3 "https://anitaku.to" >/dev/null 2>&1 ;;
         *) return 1 ;;
@@ -122,6 +140,8 @@ check_provider_health() {
 list_providers() {
     printf "\033[1;36mAvailable Stream Providers:\033[0m\n\n"
     printf "  \033[1;32m* hianime\033[0m  (primary default)  - HiAnime / Zoro extraction engine\n"
+    printf "    aniwatch (hianime mirror)   - AniWatch fast alternative mirror\n"
+    printf "    9anime   (allanime fast)    - 9Anime / AniWave high-speed API\n"
     printf "    allanime (secondary backup) - AllAnime GraphQL API engine\n"
     printf "    gogo     (tertiary backup)  - GogoAnime / Anitaku scraper\n"
     printf "\nUsage: sranime-cli -p <provider> <query>\n"
