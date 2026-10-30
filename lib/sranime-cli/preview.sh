@@ -26,7 +26,7 @@ parse_search_cards() {
     # Flatten HTML for regex parsing
     printf "%s\n\n" "$_html" | sed '/id="main-sidebar"/,$d' | tr '\n' ' ' | sed 's|<div class="flw-item|\n<div class="flw-item|g' | while IFS= read -r _item || [ -n "$_item" ]; do
         [ -z "$_item" ] && continue
-        printf "%s\n" "$_item" | grep -q 'class="film-detail"' 2>/dev/null || continue
+        case "$_item" in *'class="film-detail"'*) ;; *) continue ;; esac
 
         # Extract Slug / ID
         _id=$(printf "%s" "$_item" | sed -nE 's|.*<h3 class="film-name">[[:space:]]*<a href="[^"]*/([^"/]*)"[[:space:]]*title="([^"]*)".*|\1|p')
@@ -69,15 +69,21 @@ preview_anime() {
     [ -z "$_line" ] && return 0
 
     # Extract ID (handles pure slug, tabbed "id \t title", or full "index \t id \t title")
-    if printf "%s" "$_line" | grep -q "	"; then
-        _col1=$(printf "%s" "$_line" | cut -f 1 | tr -d "[:space:]")
-        case "$_col1" in
-            ''|*[!0-9]*) _id="$_col1" ;;
-            *) _id=$(printf "%s" "$_line" | cut -f 2) ;;
-        esac
-    else
-        _id=$(printf "%s" "$_line" | sed 's/^[[:space:]]*//; s/[[:space:]].*//')
-    fi
+    case "$_line" in
+        *'	'*)
+            _col1="${_line%%	*}"
+            case "$_col1" in
+                ''|*[!0-9]*) _id="$_col1" ;;
+                *)
+                    _rest="${_line#*	}"
+                    _id="${_rest%%	*}"
+                    ;;
+            esac
+            ;;
+        *)
+            _id="${_line%% *}"
+            ;;
+    esac
     [ -z "$_id" ] && return 0
 
     _ensure_preview_dirs
@@ -95,8 +101,7 @@ preview_anime() {
     if [ -f "$_cache_tsv" ]; then
         _row=$(grep "^${_id}	" "$_cache_tsv" 2>/dev/null | head -n 1 || true)
         if [ -n "$_row" ]; then
-            _tab=$(printf '\t')
-            IFS="$_tab" read -r _dummy _title _jname _type _dur _sub _dub _poster _desc <<EOF
+            IFS='	' read -r _dummy _title _jname _type _dur _sub _dub _poster _desc <<EOF
 $_row
 EOF
         fi
@@ -104,13 +109,19 @@ EOF
 
     # Fallback title if not in cache
     if [ -z "$_title" ]; then
-        if printf "%s" "$_line" | grep -q "	"; then
-            _col1=$(printf "%s" "$_line" | cut -f 1 | tr -d "[:space:]")
-            case "$_col1" in
-                ''|*[!0-9]*) _title=$(printf "%s" "$_line" | cut -s -f 2-) ;;
-                *) _title=$(printf "%s" "$_line" | cut -s -f 3-) ;;
-            esac
-        fi
+        case "$_line" in
+            *'	'*)
+                case "$_col1" in
+                    ''|*[!0-9]*)
+                        _title="${_line#*	}"
+                        ;;
+                    *)
+                        _rest="${_line#*	}"
+                        _title="${_rest#*	}"
+                        ;;
+                esac
+                ;;
+        esac
         [ -z "$_title" ] && _title=$(printf "%s" "$_id" | tr '-' ' ')
     fi
 
@@ -148,12 +159,21 @@ EOF
         fi
     fi
 
-    # Initialize Color Theme
-    _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
-    if [ -f "$_lib_dir/theme_colors.sh" ]; then
-        . "$_lib_dir/theme_colors.sh" 2>/dev/null || true
-        theme_colors_set "${color_theme:-default}"
-    else
+    # Initialize Color Theme (only load once to maximize preview speed)
+    if [ -z "$_tc_border" ]; then
+        _lib_dir="${SRANIME_LIB_DIR:-lib/sranime-cli}"
+        if [ -f "$_lib_dir/theme_colors.sh" ]; then
+            . "$_lib_dir/theme_colors.sh" 2>/dev/null || true
+            theme_colors_set "${color_theme:-default}"
+        else
+            _tc_border="\033[1;36m"
+            _tc_title="\033[1;37m"
+            _tc_sub="\033[0;35m"
+            _tc_label="\033[1;33m"
+            _tc_reset="\033[0m"
+        fi
+    fi
+    if [ -z "$_tc_border" ]; then
         _tc_border="\033[1;36m"
         _tc_title="\033[1;37m"
         _tc_sub="\033[0;35m"

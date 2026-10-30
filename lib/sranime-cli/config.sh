@@ -15,7 +15,13 @@ validate_config() {
         case "$_line" in
             *=*)
                 _key="${_line%%=*}"
-                _key=$(printf '%s' "$_key" | tr -d '[:space:]')
+                while :; do
+                    case "$_key" in
+                        ' '*|'	'*) _key="${_key#[ 	]}" ;;
+                        *' '|*'	') _key="${_key%[ 	]}" ;;
+                        *) break ;;
+                    esac
+                done
                 case "$_key" in
                     player|mode|quality|download_dir|menu_program|skip_intro|log_episode|\
                     player_extra_flags|menu_extra_flags|no_detach|exit_after_play|\

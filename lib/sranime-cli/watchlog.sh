@@ -76,11 +76,9 @@ watchlog_show() {
     while IFS='	' read -r _ts _action _ep _id _title _prov; do
         [ -z "$_title" ] && continue
         if [ -n "$_filter" ]; then
-            _lower_title=$(printf "%s" "$_title" | tr '[:upper:]' '[:lower:]')
             _match=0
-
-            case "$_lower_title" in
-                *"$_lower_filter"*) _match=1 ;;
+            case "$_title" in
+                *"$_filter"*) _match=1 ;;
             esac
             case "$_ts" in
                 *"$_filter"*) _match=1 ;;
@@ -107,6 +105,14 @@ watchlog_show() {
                     fi
                     if [ -n "$_to_int" ] && [ "$_d_int" -gt "$_to_int" ] 2>/dev/null; then
                         _match=0
+                    fi
+                    ;;
+                *)
+                    if [ "$_match" -eq 0 ]; then
+                        _lower_title=$(printf "%s" "$_title" | tr '[:upper:]' '[:lower:]')
+                        case "$_lower_title" in
+                            *"$_lower_filter"*) _match=1 ;;
+                        esac
                     fi
                     ;;
             esac

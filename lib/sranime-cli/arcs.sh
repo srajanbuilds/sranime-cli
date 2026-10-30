@@ -349,7 +349,7 @@ _arcs_find_entry() {
 arcs_get_range() {
     _entry=$(_arcs_find_entry "$1" "$2")
     if [ -n "$_entry" ]; then
-        IFS="$(printf '\t')" read -r _s _r _rest <<EOF
+        IFS='	' read -r _s _r _rest <<EOF
 $_entry
 EOF
         printf "%s\n" "$_r"
@@ -361,7 +361,7 @@ EOF
 arcs_get_name() {
     _entry=$(_arcs_find_entry "$1" "$2")
     if [ -n "$_entry" ]; then
-        IFS="$(printf '\t')" read -r _s _r _n _rest <<EOF
+        IFS='	' read -r _s _r _n _rest <<EOF
 $_entry
 EOF
         printf "%s\n" "$_n"
@@ -373,7 +373,7 @@ EOF
 arcs_get_synopsis() {
     _entry=$(_arcs_find_entry "$1" "$2")
     if [ -n "$_entry" ]; then
-        IFS="$(printf '\t')" read -r _s _r _n _c _syn <<EOF
+        IFS='	' read -r _s _r _n _c _syn <<EOF
 $_entry
 EOF
         printf "%s\n" "$_syn"
@@ -391,16 +391,15 @@ arcs_print_summary() {
         return 1
     fi
 
-    _range=$(printf "%s" "$_entry" | cut -f 2)
-    _name=$(printf "%s" "$_entry" | cut -f 3)
-    _count=$(printf "%s" "$_entry" | cut -f 4)
-    _synopsis=$(printf "%s" "$_entry" | cut -f 5)
+    IFS='	' read -r _slug _range _name _count _synopsis <<EOF
+$_entry
+EOF
 
     printf "\033[1;35m╭────────────────────────────────────────────────────────────────────────╮\033[0m\n"
     printf "\033[1;35m│\033[0m \033[1;33m[STORY ARC MARATHON]\033[0m \033[1;37m%-48s\033[0m \033[1;35m│\033[0m\n" "$_name"
     printf "\033[1;35m├────────────────────────────────────────────────────────────────────────┤\033[0m\n"
-    _start=$(printf "%s" "$_range" | cut -d'-' -f1)
-    _end=$(printf "%s" "$_range" | cut -d'-' -f2)
+    _start="${_range%%-*}"
+    _end="${_range#*-}"
     printf "\033[1;35m│\033[0m \033[1;36mEpisodes:\033[0m  Episodes %s - %s (%s episodes total)\033[0m\n" "$_start" "$_end" "$_count"
     printf "\033[1;35m│\033[0m \033[1;36mSynopsis:\033[0m   %-56s \033[1;35m│\033[0m\n" "$_synopsis"
     printf "\033[1;35m╰────────────────────────────────────────────────────────────────────────╯\033[0m\n"
@@ -432,7 +431,9 @@ arcs_choose_interactive() {
 $_raw_list
 EOF
 
-    _chosen=$(printf "%b" "$_formatted" | sed '/^$/d' | eval "$_menu" $_menu_opts)
+    _chosen=$(printf '%s\n' "$_raw_list" | while IFS='	' read -r _slug _range _name _count _syn; do
+        [ -n "$_slug" ] && printf "%-12s | %-38s | %s eps | %s\n" "$_range" "$_name" "$_count" "$_syn"
+    done | ${_menu} "$@")
     if [ -n "$_chosen" ]; then
         _range_sel="${_chosen%% *}"
         printf "%s\n" "$_range_sel"

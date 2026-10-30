@@ -191,7 +191,8 @@ offline_interactive() {
 " "$_shows" | menu "Select offline anime: ")
     [ -z "$_selected_show" ] && return 0
 
-    _show_title=$(printf "%s" "$_selected_show" | cut -f2)
+    _show_title="${_selected_show#*	}"
+    _show_title="${_show_title%%	*}"
     _episodes=$(offline_list_episodes "$_dir" "$_show_title")
     [ -z "$_episodes" ] && { printf "No episodes found for %s.
 " "$_show_title"; return 1; }
@@ -200,8 +201,12 @@ offline_interactive() {
 " "$_episodes" | menu "Select episode: ")
     [ -z "$_selected_ep" ] && return 0
 
-    _file_path=$(printf "%s" "$_selected_ep" | cut -f2)
-    _ep_num=$(printf "%s" "$_selected_ep" | cut -f4)
+    _file_path="${_selected_ep#*	}"
+    _file_path="${_file_path%%	*}"
+    _rest_ep="${_selected_ep#*	}"
+    _rest_ep="${_rest_ep#*	}"
+    _rest_ep="${_rest_ep#*	}"
+    _ep_num="${_rest_ep%%	*}"
 
     printf "Launching offline playback: %s (Ep %s)
 " "$_show_title" "$_ep_num"

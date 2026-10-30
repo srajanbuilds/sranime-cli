@@ -78,8 +78,8 @@ discovery_fetch_seasonal() {
 
     if [ -z "$_season" ] || [ -z "$_year" ]; then
         _curr=$(discovery_current_season)
-        _season="${_season:-$(printf "%s" "$_curr" | cut -d' ' -f1)}"
-        _year="${_year:-$(printf "%s" "$_curr" | cut -d' ' -f2)}"
+        _season="${_season:-${_curr%% *}}"
+        _year="${_year:-${_curr#* }}"
     fi
     _season=$(printf "%s" "$_season" | tr '[:lower:]' '[:upper:]')
 

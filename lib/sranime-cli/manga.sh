@@ -86,7 +86,9 @@ manga_list_chapters() {
     _resp=$(curl -sL -g --max-time 15 -H "User-Agent: $_manga_agent" "$_url" 2>/dev/null)
     
     # If no chapters returned for requested language, fall back to querying without language filter
-    _total=$(printf '%s' "$_resp" | grep -o '"total":[0-9]\+' | head -n 1 | cut -d: -f2)
+    _total="${_resp#*\"total\":}"
+    _total="${_total%%,*}"
+    _total="${_total%%\}*}"
     if [ -z "$_resp" ] || [ "${_total:-0}" -eq 0 ]; then
         _fallback_url="https://api.mangadex.org/manga/${_manga_id}/feed?order[chapter]=asc&limit=500"
         _resp=$(curl -sL -g --max-time 15 -H "User-Agent: $_manga_agent" "$_fallback_url" 2>/dev/null)
