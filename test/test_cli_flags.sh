@@ -111,6 +111,8 @@ fi
 
 _provs=$($SRANIME_CLI --list-providers 2>/dev/null)
 assert_contains "List providers outputs hianime" "$_provs" "hianime"
+assert_contains "List providers outputs aniwatch" "$_provs" "aniwatch"
+assert_contains "List providers outputs 9anime" "$_provs" "9anime"
 assert_contains "List providers outputs allanime" "$_provs" "allanime"
 assert_contains "List providers outputs gogo" "$_provs" "gogo"
 
